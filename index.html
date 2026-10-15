@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PERIODIC — Interactive System of the Elements</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070b14; --bg2:#0b1120; --panel:#0e1626; --panel2:#121c30;
+  --ink:#e9eff9; --mut:#8fa1ba; --dim:#5c6b84; --line:#1d2a42;
+  --acc:#5eead4; --warn:#fbbf24; --ok:#4ade80; --bad:#f87171;
+  --disp:'Chakra Petch',sans-serif; --body:'IBM Plex Sans',sans-serif; --mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);min-height:100vh;overflow-x:hidden}
+button{font-family:inherit;cursor:pointer}
+::-webkit-scrollbar{height:10px;width:10px}
+::-webkit-scrollbar-thumb{background:#243756;border-radius:6px}
+::-webkit-scrollbar-track{background:transparent}
+
+.bg{position:fixed;inset:0;z-index:-1;overflow:hidden;
+  background:
+    radial-gradient(1100px 600px at 12% -8%, rgba(94,234,212,.07), transparent 60%),
+    radial-gradient(900px 700px at 105% 110%, rgba(251,191,36,.06), transparent 55%),
+    radial-gradient(700px 500px at 85% 5%, rgba(129,140,248,.06), transparent 60%),
+    var(--bg);}
+.bg::before{content:'';position:absolute;inset:0;
+  background-image:linear-gradient(rgba(140,170,220,.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(140,170,220,.045) 1px,transparent 1px);
+  background-size:44px 44px;
+  mask-image:radial-gradient(ellipse 90% 80% at 50% 30%,#000 30%,transparent 100%);}
+.bg .orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5;animation:drift 26s ease-in-out infinite alternate}
+.bg .o1{width:420px;height:420px;left:-140px;top:8%;background:radial-gradient(circle,rgba(94,234,212,.16),transparent 70%)}
+.bg .o2{width:520px;height:520px;right:-180px;bottom:-10%;background:radial-gradient(circle,rgba(251,146,60,.12),transparent 70%);animation-delay:-13s}
+@keyframes drift{from{transform:translate(0,0)}to{transform:translate(60px,-50px)}}
+
+header{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;justify-content:space-between;
+  padding:26px 30px 18px;border-bottom:1px solid transparent;
+  border-image:linear-gradient(90deg,transparent,rgba(94,234,212,.4),rgba(251,191,36,.35),transparent) 1;}
+.brand{display:flex;gap:16px;align-items:center}
+.mark{width:58px;height:58px;flex:none;border:1.5px solid var(--acc);border-radius:9px;display:grid;place-items:center;
+  position:relative;background:rgba(94,234,212,.06);box-shadow:0 0 24px rgba(94,234,212,.12) inset}
+.mark b{font-family:var(--disp);font-size:26px;color:var(--acc)}
+.mark i{position:absolute;top:4px;left:6px;font-style:normal;font-family:var(--mono);font-size:9px;color:var(--mut)}
+.mark u{position:absolute;bottom:3px;font-size:7.5px;text-decoration:none;color:var(--dim);letter-spacing:.08em}
+.brand h1{font-family:var(--disp);font-size:clamp(22px,3.4vw,34px);font-weight:700;letter-spacing:.06em;line-height:1}
+.brand h1 em{font-style:normal;color:var(--acc)}
+.brand p{font-family:var(--mono);font-size:11px;color:var(--mut);margin-top:6px;letter-spacing:.09em}
+.hud{display:flex;gap:10px;align-items:center}
+.search{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 14px;color:var(--ink);
+  font-family:var(--mono);font-size:13px;width:230px;outline:none;transition:.2s}
+.search:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(94,234,212,.12)}
+.ghostbtn{background:transparent;border:1px solid var(--line);color:var(--mut);border-radius:8px;padding:10px 14px;
+  font-size:12px;letter-spacing:.06em;transition:.2s}
+.ghostbtn:hover{border-color:var(--acc);color:var(--acc);transform:translateY(-1px)}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:14px 30px;border-bottom:1px solid var(--line)}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{display:inline-flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);
+  border-radius:99px;padding:6px 12px;font-size:11.5px;color:var(--mut);transition:.18s;letter-spacing:.02em}
+.chip .dot{width:9px;height:9px;border-radius:50%;background:var(--c)}
+.chip:hover{transform:translateY(-1px);border-color:var(--c);color:var(--ink)}
+.chip.on{background:color-mix(in srgb,var(--c) 20%,var(--panel));border-color:var(--c);color:var(--ink)}
+.tb-right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+select.ctl{background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px 10px;font-family:var(--mono);font-size:12px;outline:none}
+.tbtn{border:1px solid var(--line);background:var(--panel);color:var(--mut);border-radius:8px;padding:8px 13px;
+  font-size:12px;font-weight:600;letter-spacing:.05em;transition:.2s}
+.tbtn:hover{color:var(--ink);border-color:#3a5178}
+.tbtn.on{background:rgba(251,191,36,.12);border-color:var(--warn);color:var(--warn);box-shadow:0 0 14px rgba(251,191,36,.15)}
+.tbtn.on.acc{background:rgba(94,234,212,.12);border-color:var(--acc);color:var(--acc);box-shadow:0 0 14px rgba(94,234,212,.15)}
+.heatlegend{display:none;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;color:var(--mut)}
+.heatlegend .grad{width:110px;height:9px;border-radius:5px;background:linear-gradient(90deg,hsl(222 75% 16%),hsl(150 80% 40%),hsl(60 90% 52%),hsl(14 95% 55%))}
+.heatlegend.show{display:inline-flex}
+
+.table-wrap{padding:26px 30px 40px;overflow-x:auto}
+.ptable{display:grid;grid-template-columns:repeat(18,54px);grid-template-rows:repeat(7,54px) 16px repeat(2,54px);
+  gap:5px;width:max-content;margin:0 auto}
+.tile{position:relative;border-radius:7px;border:1px solid color-mix(in srgb,var(--c) 32%,transparent);
+  background:#111a2c;background:color-mix(in srgb,var(--c) 13%,#0d1524);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  transition:transform .16s ease,box-shadow .16s ease,opacity .25s,filter .25s;padding:2px;overflow:hidden}
+.tile:hover{transform:translateY(-3px) scale(1.09);z-index:5;
+  box-shadow:0 8px 26px color-mix(in srgb,var(--c) 40%,transparent),0 0 0 1px var(--c);border-color:var(--c)}
+.tile .z{position:absolute;top:3px;left:5px;font-family:var(--mono);font-size:8px;color:var(--mut)}
+.tile .sym{font-family:var(--disp);font-weight:700;font-size:17px;color:var(--c);line-height:1.05}
+.tile .nm{font-size:6.8px;letter-spacing:.03em;color:var(--mut);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .ms{font-family:var(--mono);font-size:6.6px;color:var(--dim)}
+.tile.sel{box-shadow:0 0 0 2px var(--c),0 0 22px color-mix(in srgb,var(--c) 55%,transparent);transform:scale(1.08);z-index:6}
+.tile.dim{opacity:.14;filter:saturate(.4)}
+.tile.react{animation:pulse 1.15s ease-in-out infinite;border-color:var(--c);z-index:4}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 1px var(--c),0 0 10px color-mix(in srgb,var(--c) 50%,transparent)}
+  50%{box-shadow:0 0 0 3px var(--c),0 0 26px color-mix(in srgb,var(--c) 75%,transparent)}}
+.tile .cmp{position:absolute;top:2px;right:3px;width:12px;height:12px;border-radius:50%;background:var(--acc);
+  color:#04211c;font-size:8px;font-weight:700;display:grid;place-items:center;font-family:var(--mono)}
+.tile .rl{position:absolute;top:2px;left:50%;transform:translateX(-50%);width:13px;height:13px;border-radius:50%;
+  background:var(--warn);color:#1a1206;font-size:8px;font-weight:700;display:grid;place-items:center;font-family:var(--mono)}
+.tile.hot .sym,.tile.hot .z,.tile.hot .nm,.tile.hot .ms{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.ph{border:1px dashed #2a3b5c;border-radius:7px;display:grid;place-items:center;color:var(--dim);
+  font-family:var(--mono);font-size:9px;text-align:center;line-height:1.5}
+.flabel{grid-row:9/11;display:flex;align-items:center;font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:.1em;writing-mode:vertical-rl;transform:rotate(180deg);justify-self:end}
+
+.tip{position:fixed;z-index:60;pointer-events:none;background:#0d1626f2;border:1px solid #2a3d60;border-radius:9px;
+  padding:10px 13px;font-size:12px;opacity:0;transition:opacity .12s;max-width:250px;backdrop-filter:blur(6px);
+  box-shadow:0 12px 34px rgba(0,0,0,.5)}
+.tip.show{opacity:1}
+.tip b{font-family:var(--disp);font-size:15px;letter-spacing:.03em}
+.tip .cat{display:inline-block;margin-left:8px;font-size:9.5px;padding:2px 7px;border-radius:99px;color:#06121f;font-weight:600}
+.tip .row{font-family:var(--mono);font-size:10.5px;color:var(--mut);margin-top:5px}
+
+#panel{position:fixed;top:0;right:0;height:100vh;width:430px;max-width:100vw;background:linear-gradient(180deg,var(--panel2),var(--panel));
+  border-left:1px solid var(--line);z-index:50;transform:translateX(105%);transition:transform .35s cubic-bezier(.2,.8,.2,1);
+  display:flex;flex-direction:column;box-shadow:-24px 0 60px rgba(0,0,0,.45)}
+#panel.open{transform:translateX(0)}
+.p-head{padding:22px 24px 0;position:relative}
+.p-close{position:absolute;top:14px;right:14px;background:var(--panel);border:1px solid var(--line);color:var(--mut);
+  width:32px;height:32px;border-radius:8px;font-size:15px;transition:.2s}
+.p-close:hover{color:var(--ink);border-color:var(--acc);transform:rotate(90deg)}
+.p-id{display:flex;gap:16px;align-items:center}
+.p-sym{width:86px;height:86px;flex:none;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:color-mix(in srgb,var(--c) 18%,#0c1424);border:1.5px solid var(--c);box-shadow:0 0 30px color-mix(in srgb,var(--c) 30%,transparent)}
+.p-sym b{font-family:var(--disp);font-size:38px;color:var(--c);line-height:1}
+.p-sym span{font-family:var(--mono);font-size:10px;color:var(--mut);margin-top:3px}
+.p-id h2{font-family:var(--disp);font-size:27px;letter-spacing:.04em;line-height:1.05}
+.p-cat{display:inline-block;margin-top:6px;font-size:10.5px;font-weight:600;padding:3px 10px;border-radius:99px;color:#06121f;letter-spacing:.05em}
+.p-mass{font-family:var(--mono);font-size:12px;color:var(--mut);margin-top:6px}
+.p-fact{padding:12px 24px 0;font-size:12.5px;color:var(--mut);font-style:italic;line-height:1.55}
+.p-actions{display:flex;gap:8px;padding:14px 24px 0}
+.p-btn{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--mut);border-radius:8px;padding:8px;
+  font-size:11.5px;font-weight:600;letter-spacing:.04em;transition:.2s}
+.p-btn:hover{border-color:var(--acc);color:var(--acc)}
+.p-btn.on{border-color:var(--acc);color:var(--acc);background:rgba(94,234,212,.1)}
+/* ---- two-row tab bar ---- */
+.p-tabs{display:flex;flex-wrap:wrap;gap:2px;padding:14px 20px 0;border-bottom:1px solid var(--line)}
+.p-tab{flex:1 1 30%;text-align:center;background:none;border:none;color:var(--dim);font-family:var(--disp);
+  font-size:10.5px;letter-spacing:.08em;padding:8px 4px;border-bottom:2px solid transparent;transition:.18s;text-transform:uppercase}
+.p-tab:hover{color:var(--mut)}
+.p-tab.on{color:var(--acc);border-color:var(--acc)}
+.p-body{flex:1;overflow-y:auto;padding:18px 24px 30px}
+.tabpage{display:none;animation:fadein .3s}
+.tabpage.on{display:block}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.kv>div{background:var(--panel);padding:9px 12px}
+.kv .k{font-size:9.5px;letter-spacing:.1em;color:var(--dim);text-transform:uppercase}
+.kv .v{font-family:var(--mono);font-size:13px;margin-top:3px}
+.kv .v small{color:var(--mut);font-size:10px}
+h4.sec{font-family:var(--disp);font-size:11px;letter-spacing:.16em;color:var(--mut);text-transform:uppercase;margin:20px 0 10px}
+h4.sec:first-child{margin-top:0}
+.bohrbox{background:#0a111f;border:1px solid var(--line);border-radius:12px;display:grid;place-items:center;padding:8px}
+.shellchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.schip{font-family:var(--mono);font-size:10.5px;background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:5px 9px;color:var(--mut)}
+.schip b{color:var(--ink)}
+.cfg{font-family:var(--mono);font-size:13px;color:var(--acc);margin-top:12px;background:rgba(94,234,212,.06);
+  border:1px solid rgba(94,234,212,.2);border-radius:8px;padding:9px 12px}
+.specwrap{position:relative;background:#0a111f;border:1px solid var(--line);border-radius:12px;padding:8px}
+.specnote{font-size:10.5px;color:var(--dim);margin-top:9px;line-height:1.5}
+.speclabel{position:absolute;top:10px;right:14px;font-family:var(--mono);font-size:10px;color:var(--acc);
+  background:#0a111fdd;border:1px solid var(--line);padding:3px 8px;border-radius:6px;pointer-events:none;display:none}
+
+.molhead{display:flex;gap:16px;align-items:center;background:#0a111f;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.molhead .f{font-family:var(--disp);font-size:34px;color:var(--acc);line-height:1}
+.molhead .g{font-size:12px;color:var(--mut);line-height:1.5}
+.molvis{display:grid;place-items:center}
+.molvis svg{width:100%;max-width:330px;height:auto}
+.ebar{margin-top:10px;height:14px;background:#131f36;border-radius:7px;overflow:hidden}
+.ebar i{display:block;height:100%;width:0;transition:width .8s cubic-bezier(.2,.8,.2,1);
+  background:linear-gradient(90deg,#2dd4bf,#fbbf24,#f87171)}
+.enote{font-size:11px;color:var(--mut);margin-top:8px;line-height:1.55}
+.oxchips{display:flex;flex-wrap:wrap;gap:6px}
+.ox{font-family:var(--mono);font-size:11.5px;background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:4px 10px;color:var(--ink)}
+.ox.neg{color:#7dd3fc;border-color:rgba(125,211,252,.35)}
+.ox.pos{color:#fbbf24;border-color:rgba(251,191,36,.35)}
+
+.iso{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--line)}
+.iso:last-child{border:none}
+.iso .nu{font-family:var(--disp);font-size:15px;min-width:104px;display:flex;flex-direction:column;line-height:1.1}
+.iso .nu sup{font-size:10px;color:var(--acc);font-family:var(--mono)}
+.iso .nu i{font-style:italic;font-size:8.5px;color:var(--dim);font-family:var(--body);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:104px}
+.iso .bar{flex:1;height:8px;background:#16233b;border-radius:5px;overflow:hidden}
+.iso .bar i{display:block;height:100%;border-radius:5px;width:0;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.iso .ab{font-family:var(--mono);font-size:10px;color:var(--mut);min-width:100px;text-align:right}
+.ib{font-size:8.5px;font-weight:700;letter-spacing:.08em;padding:2px 7px;border-radius:99px;font-family:var(--mono)}
+.ib.stable{color:var(--ok);background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.35)}
+.ib.un{color:var(--bad);background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.35)}
+.isosum{font-size:11px;color:var(--mut);margin-bottom:6px}
+
+.rxn{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:#0c1424;transition:.18s}
+.rxn:hover{border-color:#3a5178;transform:translateX(3px)}
+.rxn-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.rxn-partner{background:none;border:none;color:var(--mut);font-family:var(--disp);font-size:13px;display:flex;align-items:center;gap:7px;padding:0}
+.rxn-partner b{color:var(--c);font-size:15px}
+.rxn-partner:hover{color:var(--ink)}
+.rxn-eq{font-family:var(--mono);font-size:12.5px;margin:7px 0 6px;color:var(--ink)}
+.rxn-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.dh{font-family:var(--mono);font-size:10.5px;padding:2px 8px;border-radius:99px}
+.dh.exo{color:var(--ok);background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3)}
+.dh.endo{color:var(--warn);background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3)}
+.dh.na{color:var(--dim);border:1px solid var(--line);background:none}
+.cond{font-size:10.5px;color:var(--dim)}
+.est{font-size:9px;color:var(--warn);border:1px solid rgba(251,191,36,.35);border-radius:99px;padding:1px 7px;letter-spacing:.07em}
+.tag{font-size:8.5px;font-family:var(--mono);letter-spacing:.09em;color:var(--acc);border:1px solid rgba(94,234,212,.35);border-radius:99px;padding:1px 8px}
+
+#tray{position:fixed;left:50%;bottom:18px;transform:translate(-50%,140%);width:min(760px,94vw);z-index:45;
+  background:#0d1626f0;border:1px solid #2a3d60;border-radius:14px;padding:16px 18px;backdrop-filter:blur(10px);
+  box-shadow:0 24px 60px rgba(0,0,0,.55);transition:transform .4s cubic-bezier(.2,.8,.2,1),bottom .3s}
+#tray.show{transform:translate(-50%,0)}
+#tray.lift{bottom:225px}
+.tray-head{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.tray-head b{font-family:var(--disp);font-size:12px;letter-spacing:.14em;color:var(--acc)}
+.tray-slots{display:flex;gap:6px;flex:1;flex-wrap:wrap}
+.slot{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:4px 8px}
+.slot b{font-family:var(--disp);color:var(--c)}
+.slot .x{color:var(--dim);cursor:pointer;padding:0 2px}
+.slot .x:hover{color:#f87171}
+.crow{display:grid;grid-template-columns:52px 1fr 110px;gap:10px;align-items:center;padding:5px 0}
+.crow .cs{font-family:var(--disp);font-size:15px;color:var(--c)}
+.crow .track{height:16px;background:#131f36;border-radius:6px;overflow:hidden}
+.crow .fill{height:100%;border-radius:6px;width:0;transition:width .6s cubic-bezier(.2,.8,.2,1);
+  background:linear-gradient(90deg,color-mix(in srgb,var(--c) 45%,transparent),var(--c))}
+.crow .cv{font-family:var(--mono);font-size:11px;color:var(--mut);text-align:right}
+
+/* ---- reaction lab ---- */
+#rlab{position:fixed;left:50%;bottom:18px;transform:translate(-50%,140%);width:min(640px,94vw);z-index:46;
+  background:#0d1626f5;border:1px solid rgba(251,191,36,.4);border-radius:14px;padding:16px 18px;backdrop-filter:blur(10px);
+  box-shadow:0 24px 60px rgba(0,0,0,.55),0 0 30px rgba(251,191,36,.06);transition:transform .4s cubic-bezier(.2,.8,.2,1)}
+#rlab.show{transform:translate(-50%,0)}
+.rlab-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.rlab-head b{font-family:var(--disp);font-size:12px;letter-spacing:.16em;color:var(--warn)}
+.rlab-head .hint{flex:1;font-size:11px;color:var(--dim)}
+.rlab-head button{background:none;border:none;color:var(--dim);font-size:15px}
+.rlab-head button:hover{color:var(--bad)}
+.labpair{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.labchip{display:inline-flex;align-items:center;background:var(--panel2);border:1px solid color-mix(in srgb,var(--c) 50%,transparent);border-radius:8px;overflow:hidden}
+.lc-open{background:none;border:none;color:var(--ink);padding:6px 9px;font-size:12px}
+.lc-open b{font-family:var(--disp);color:var(--c);font-size:14px;margin-right:5px}
+.lc-open:hover{background:rgba(255,255,255,.05)}
+.lc-x{padding:6px 8px;color:var(--dim);cursor:pointer;border-left:1px solid var(--line)}
+.lc-x:hover{color:var(--bad)}
+.labslot{font-family:var(--mono);font-size:11px;color:var(--dim);border:1px dashed #3a4a6a;border-radius:8px;padding:7px 12px}
+.labplus{color:var(--dim);font-size:16px}
+.labres{border:1px solid var(--line);border-radius:10px;padding:12px;background:#0c1424}
+.labres .rxn-eq{font-size:14px;margin:4px 0 8px}
+
+footer{padding:14px 30px 26px;color:var(--dim);font-size:11px;font-family:var(--mono);letter-spacing:.04em;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+@media (max-width:760px){
+  #panel{width:100vw}
+  header{padding:20px 16px 14px}
+  .toolbar,.table-wrap,footer{padding-left:16px;padding-right:16px}
+  .tile .nm,.tile .ms{display:none}
+}
+</style>
+</head>
+<body>
+<div class="bg"><div class="orb o1"></div><div class="orb o2"></div></div>
+
+<header>
+  <div class="brand">
+    <div class="mark"><i>101</i><b>Md</b><u>MENDELEVIUM</u></div>
+    <div>
+      <h1>PERIODIC <em>SYSTEM</em></h1>
+      <p>118 ELEMENTS · THERMOCHEMISTRY · SPECTRA · ISOTOPES · REACTIONS</p>
+    </div>
+  </div>
+  <div class="hud">
+    <input id="search" class="search" type="text" placeholder="search name / symbol / Z  ( / )" autocomplete="off">
+    <button id="surprise" class="ghostbtn">⚛ SURPRISE ME</button>
+  </div>
+</header>
+
+<section class="toolbar">
+  <div class="chips" id="legend"></div>
+  <div class="tb-right">
+    <span class="heatlegend" id="heatlegend"><span id="hlmin"></span><span class="grad"></span><span id="hlmax"></span></span>
+    <select id="heat" class="ctl" title="Color the whole table by one parameter"><option value="">heatmap: off</option></select>
+    <button id="rlabBtn" class="tbtn" title="Pick any two elements and infer the reaction">⚗ REACTION LAB</button>
+    <button id="cmpBtn" class="tbtn">⇄ COMPARE</button>
+    <button id="resetBtn" class="tbtn">RESET</button>
+  </div>
+</section>
+
+<main class="table-wrap"><div class="ptable" id="ptable"></div></main>
+
+<aside id="panel" aria-live="polite">
+  <div class="p-head">
+    <button class="p-close" id="pclose" aria-label="close">✕</button>
+    <div class="p-id">
+      <div class="p-sym" id="psym"><b>?</b><span>Z</span></div>
+      <div>
+        <h2 id="pname">—</h2>
+        <span class="p-cat" id="pcat">—</span>
+        <div class="p-mass" id="pmass"></div>
+      </div>
+    </div>
+    <div class="p-fact" id="pfact"></div>
+    <div class="p-actions">
+      <button class="p-btn" id="pcompare">＋ COMPARE</button>
+      <button class="p-btn" id="preact">⚗ REACTS WITH</button>
+    </div>
+  </div>
+  <div class="p-tabs" id="ptabs">
+    <button class="p-tab on" data-t="ov">Overview</button>
+    <button class="p-tab" data-t="mo">Molecule</button>
+    <button class="p-tab" data-t="sh">Shells</button>
+    <button class="p-tab" data-t="sp">Spectrum</button>
+    <button class="p-tab" data-t="is">Isotopes</button>
+    <button class="p-tab" data-t="re">Reactions</button>
+  </div>
+  <div class="p-body">
+    <div class="tabpage on" id="pg-ov"></div>
+    <div class="tabpage" id="pg-mo"></div>
+    <div class="tabpage" id="pg-sh"></div>
+    <div class="tabpage" id="pg-sp"></div>
+    <div class="tabpage" id="pg-is"></div>
+    <div class="tabpage" id="pg-re"></div>
+  </div>
+</aside>
+
+<div id="tray">
+  <div class="tray-head">
+    <b>COMPARE</b>
+    <select id="cparam" class="ctl"></select>
+    <label style="font-size:11px;color:var(--mut);display:flex;gap:5px;align-items:center"><input type="checkbox" id="clog"> log</label>
+    <div class="tray-slots" id="cslots"></div>
+  </div>
+  <div id="cbars"></div>
+</div>
+
+<div id="rlab">
+  <div class="rlab-head">
+    <b>⚗ REACTION LAB</b>
+    <span class="hint" id="rlabhint">click two elements on the table</span>
+    <button id="rlabclose" aria-label="close lab">✕</button>
+  </div>
+  <div id="rlabbody"></div>
+</div>
+
+<div class="tip" id="tip"></div>
+
+<footer>
+  <span>ΔH° AT 298 K PER REACTION AS WRITTEN · EST EQUATIONS ARE OXIDATION-STATE ESTIMATES · VERIFY AGAINST NIST/CRC FOR RESEARCH</span>
+  <span>ESC closes · SHIFT+CLICK adds to compare</span>
+</footer>
+
+<script>
+'use strict';
+/* ================================================================
+   1 · ELEMENT DATA
+================================================================ */
+const CATS={
+  AM:{n:'Alkali metal',c:'#ff5c6c'}, AE:{n:'Alkaline earth',c:'#ff9f43'},
+  TM:{n:'Transition metal',c:'#ffd166'}, LN:{n:'Lanthanide',c:'#f472b6'},
+  AC:{n:'Actinide',c:'#c084fc'}, MD:{n:'Metalloid',c:'#2dd4bf'},
+  NM:{n:'Nonmetal',c:'#4ade80'}, HG:{n:'Halogen',c:'#38bdf8'},
+  NG:{n:'Noble gas',c:'#818cf8'}, PT:{n:'Post-transition',c:'#9fb3c8'}
+};
+const EL=[
+[1,"H","Hydrogen",1.008,"NM",1,1,1,1,[1],"1s¹",2.20,0.0000899,13.99,20.27,1766,"Cavendish",1400,[656.3,486.1,434.0,410.2,397.0,388.9],[[1,99.9885,"stable"],[2,0.0115,"stable"],[3,null,"t½ 12.32 y"]],0],
+[2,"He","Helium",4.0026,"NG",18,1,18,1,[2],"1s²",null,0.0001785,0.95,4.22,1868,"Janssen & Lockyer",0.008,[587.6,667.8,706.5,501.6,492.2,471.3,447.1,388.9],[[4,99.99986,"stable"],[3,0.00014,"stable"]],0],
+[3,"Li","Lithium",6.94,"AM",1,2,1,2,[2,1],"[He] 2s¹",0.98,0.534,453.7,1603,1817,"Arfwedson",20,[670.8,610.4,460.3,323.3],[[7,92.41,"stable"],[6,7.59,"stable"]],0],
+[4,"Be","Beryllium",9.0122,"AE",2,2,2,2,[2,2],"[He] 2s²",1.57,1.85,1560,2742,1798,"Vauquelin",2.8,[313.1,234.9,457.3],[[9,100,"stable"],[10,null,"t½ 1.39 My · trace"]],1],
+[5,"B","Boron",10.81,"MD",13,2,13,2,[2,3],"[He] 2s² 2p¹",2.04,2.34,2349,4200,1808,"Gay-Lussac & Thénard",10,[249.7,249.8,208.9],[[11,80.1,"stable"],[10,19.9,"stable"]],1],
+[6,"C","Carbon",12.011,"NM",14,2,14,2,[2,4],"[He] 2s² 2p²",2.55,2.267,3823,4098,0,"known since antiquity",200,[247.9,193.1,165.7],[[12,98.93,"stable"],[13,1.07,"stable"],[14,null,"t½ 5730 y · trace"]],1],
+[7,"N","Nitrogen",14.007,"NM",15,2,15,2,[2,5],"[He] 2s² 2p³",3.04,0.001251,63.15,77.36,1772,"D. Rutherford",19,[746.8,744.2,742.4,868.0],[[14,99.636,"stable"],[15,0.364,"stable"]],1],
+[8,"O","Oxygen",15.999,"NM",16,2,16,2,[2,6],"[He] 2s² 2p⁴",3.44,0.001429,54.36,90.19,1774,"Priestley & Scheele",461000,[777.3,844.6,615.8,557.7,630.0],[[16,99.757,"stable"],[17,0.038,"stable"],[18,0.205,"stable"]],0],
+[9,"F","Fluorine",18.998,"HG",17,2,17,2,[2,7],"[He] 2s² 2p⁵",3.98,0.001696,53.48,85.03,1886,"Moissan",585,[685.6,690.2,623.9],[[19,100,"stable"]],1],
+[10,"Ne","Neon",20.180,"NG",18,2,18,2,[2,8],"[He] 2s² 2p⁶",null,0.0009,24.56,27.10,1898,"Ramsay & Travers",0.005,[640.2,638.3,633.4,626.7,621.7,614.3,607.4,594.5,588.2,585.2,540.1],[[20,90.48,"stable"],[22,9.25,"stable"],[21,0.27,"stable"]],0],
+[11,"Na","Sodium",22.990,"AM",1,3,1,3,[2,8,1],"[Ne] 3s¹",0.93,0.971,370.9,1156,1807,"Davy",23600,[589.0,589.6,568.8,330.3],[[23,100,"stable"]],0],
+[12,"Mg","Magnesium",24.305,"AE",2,3,2,3,[2,8,2],"[Ne] 3s²",1.31,1.738,923,1363,1755,"Black",23300,[285.2,518.4,517.3,383.8],[[24,78.99,"stable"],[26,11.01,"stable"],[25,10.00,"stable"]],0],
+[13,"Al","Aluminium",26.982,"PT",13,3,13,3,[2,8,3],"[Ne] 3s² 3p¹",1.61,2.70,933.5,2792,1825,"Ørsted",82300,[396.2,394.4,309.3,308.2],[[27,100,"stable"]],0],
+[14,"Si","Silicon",28.085,"MD",14,3,14,3,[2,8,4],"[Ne] 3s² 3p²",1.90,2.33,1687,3538,1824,"Berzelius",282000,[251.6,288.2,390.6],[[28,92.23,"stable"],[29,4.67,"stable"],[30,3.10,"stable"]],1],
+[15,"P","Phosphorus",30.974,"NM",15,3,15,3,[2,8,5],"[Ne] 3s² 3p³",2.19,1.82,317.3,553.7,1669,"Brandt",1050,[253.6,255.3,213.6],[[31,100,"stable"]],1],
+[16,"S","Sulfur",32.06,"NM",16,3,16,3,[2,8,6],"[Ne] 3s² 3p⁴",2.58,2.067,388.4,717.8,0,"known since antiquity",350,[921.3,867.9],[[32,94.93,"stable"],[34,4.29,"stable"],[33,0.76,"stable"],[36,0.02,"stable"]],1],
+[17,"Cl","Chlorine",35.45,"HG",17,3,17,3,[2,8,7],"[Ne] 3s² 3p⁵",3.16,0.003214,171.6,239.11,1774,"Scheele",145,[837.6,858.6,894.8],[[35,75.76,"stable"],[37,24.24,"stable"]],1],
+[18,"Ar","Argon",39.948,"NG",18,3,18,3,[2,8,8],"[Ne] 3s² 3p⁶",null,0.001784,83.81,87.30,1894,"Rayleigh & Ramsay",3.5,[750.4,763.5,811.5,696.5,706.7,727.3,738.4,794.8,420.1,427.2],[[40,99.60,"stable"],[36,0.334,"stable"],[38,0.063,"stable"]],0],
+[19,"K","Potassium",39.098,"AM",1,4,1,4,[2,8,8,1],"[Ar] 4s¹",0.82,0.862,336.7,1032,1807,"Davy",20900,[766.5,769.9,404.4],[[39,93.26,"stable"],[41,6.73,"stable"],[40,0.0117,"t½ 1.25 By"]],0],
+[20,"Ca","Calcium",40.078,"AE",2,4,2,4,[2,8,8,2],"[Ar] 4s²",1.00,1.54,1115,1757,1808,"Davy",41500,[393.4,396.8,422.7,616.2],[[40,96.94,"stable"],[44,2.09,"stable"],[42,0.647,"stable"],[48,0.187,"t½ 6.4e19 y"]],0],
+[21,"Sc","Scandium",44.956,"TM",3,4,3,4,[2,8,9,2],"[Ar] 3d¹ 4s²",1.36,2.99,1814,3109,1879,"Nilson",22,[424.7,429.9,431.4],[[45,100,"stable"]],1],
+[22,"Ti","Titanium",47.867,"TM",4,4,4,4,[2,8,10,2],"[Ar] 3d² 4s²",1.54,4.54,1941,3560,1791,"Gregor",5650,[453.3,430.6,398.9,365.3],[[48,73.72,"stable"],[46,8.25,"stable"],[47,7.44,"stable"]],1],
+[23,"V","Vanadium",50.942,"TM",5,4,5,4,[2,8,11,2],"[Ar] 3d³ 4s²",1.63,6.11,2183,3680,1801,"del Río",120,[437.9,411.2],[[51,99.75,"stable"],[50,0.25,"stable"]],1],
+[24,"Cr","Chromium",51.996,"TM",6,4,6,4,[2,8,13,1],"[Ar] 3d⁵ 4s¹",1.66,7.15,2180,2944,1797,"Vauquelin",102,[425.4,427.5,429.0,520.4,520.8],[[52,83.79,"stable"],[53,9.50,"stable"],[50,4.35,"stable"],[54,2.36,"stable"]],0],
+[25,"Mn","Manganese",54.938,"TM",7,4,7,4,[2,8,13,2],"[Ar] 3d⁵ 4s²",1.55,7.30,1519,2334,1774,"Gahn",950,[403.1,403.3,403.4,279.5],[[55,100,"stable"]],0],
+[26,"Fe","Iron",55.845,"TM",8,4,8,4,[2,8,14,2],"[Ar] 3d⁶ 4s²",1.83,7.874,1811,3134,0,"known since antiquity",56300,[372.0,373.7,382.0,386.0,404.6,438.4],[[56,91.75,"stable"],[54,5.85,"stable"],[57,2.12,"stable"],[58,0.28,"stable"]],0],
+[27,"Co","Cobalt",58.933,"TM",9,4,9,4,[2,8,15,2],"[Ar] 3d⁷ 4s²",1.88,8.86,1768,3200,1735,"Brandt",25,[340.5,346.6,352.7],[[59,100,"stable"]],1],
+[28,"Ni","Nickel",58.693,"TM",10,4,10,4,[2,8,16,2],"[Ar] 3d⁸ 4s²",1.91,8.912,1728,3186,1751,"Cronstedt",84,[341.5,352.5,361.9],[[58,68.08,"stable"],[60,26.22,"stable"],[62,3.63,"stable"]],1],
+[29,"Cu","Copper",63.546,"TM",11,4,11,4,[2,8,18,1],"[Ar] 3d¹⁰ 4s¹",1.90,8.96,1357.8,2835,0,"known since antiquity",60,[324.8,327.4,510.6,578.2],[[63,69.15,"stable"],[65,30.85,"stable"]],0],
+[30,"Zn","Zinc",65.38,"TM",12,4,12,4,[2,8,18,2],"[Ar] 3d¹⁰ 4s²",1.65,7.134,692.7,1180,1746,"Marggraf",70,[468.0,472.2,481.0,636.2],[[64,49.17,"stable"],[66,27.73,"stable"],[68,18.45,"stable"]],0],
+[31,"Ga","Gallium",69.723,"PT",13,4,13,4,[2,8,18,3],"[Ar] 3d¹⁰ 4s² 4p¹",1.81,5.907,302.9,2673,1875,"Boisbaudran",19,[417.2,403.3,294.4,287.4],[[69,60.11,"stable"],[71,39.89,"stable"]],0],
+[32,"Ge","Germanium",72.630,"MD",14,4,14,4,[2,8,18,4],"[Ar] 3d¹⁰ 4s² 4p²",2.01,5.323,1211.4,3106,1886,"Winkler",1.5,[265.1,270.9,303.9],[[74,36.73,"stable"],[72,27.66,"stable"],[70,20.77,"stable"]],1],
+[33,"As","Arsenic",74.922,"MD",15,4,15,4,[2,8,18,5],"[Ar] 3d¹⁰ 4s² 4p³",2.18,5.776,1090,887,1250,"Albertus Magnus (credited)",1.8,[234.9,278.0,286.0],[[75,100,"stable"]],1],
+[34,"Se","Selenium",78.971,"NM",16,4,16,4,[2,8,18,6],"[Ar] 3d¹⁰ 4s² 4p⁴",2.55,4.809,494,958,1817,"Berzelius",0.05,[204.0,206.3,196.0],[[80,49.61,"stable"],[78,23.77,"stable"],[76,9.37,"stable"]],1],
+[35,"Br","Bromine",79.904,"HG",17,4,17,4,[2,8,18,7],"[Ar] 3d¹⁰ 4s² 4p⁵",2.96,3.122,265.8,332.0,1826,"Balard",2.4,[827.2,882.6,769.4],[[79,50.69,"stable"],[81,49.31,"stable"]],1],
+[36,"Kr","Krypton",83.798,"NG",18,4,18,4,[2,8,18,8],"[Ar] 3d¹⁰ 4s² 4p⁶",3.00,0.003733,115.77,119.93,1898,"Ramsay & Travers",0.0001,[557.1,587.1,647.1,760.2,769.4,427.4],[[84,56.99,"stable"],[86,17.28,"stable"],[82,11.59,"stable"]],0],
+[37,"Rb","Rubidium",85.468,"AM",1,5,1,5,[2,8,18,8,1],"[Kr] 5s¹",0.82,1.532,312.5,961,1861,"Bunsen & Kirchhoff",90,[780.0,794.8,421.6],[[85,72.17,"stable"],[87,27.83,"t½ 4.9e10 y"]],0],
+[38,"Sr","Strontium",87.62,"AE",2,5,2,5,[2,8,18,8,2],"[Kr] 5s²",0.95,2.64,1050,1655,1790,"Crawford",370,[460.7,407.8,689.3,679.1],[[88,82.58,"stable"],[86,9.86,"stable"],[87,7.00,"stable"]],0],
+[39,"Y","Yttrium",88.906,"TM",3,5,3,5,[2,8,18,9,2],"[Kr] 4d¹ 5s²",1.22,4.47,1799,3609,1794,"Gadolin",33,[437.5,410.2,412.8],[[89,100,"stable"]],1],
+[40,"Zr","Zirconium",91.224,"TM",4,5,4,5,[2,8,18,10,2],"[Kr] 4d² 5s²",1.33,6.52,2128,4682,1789,"Klaproth",165,[468.8,360.1,383.9],[[90,51.45,"stable"],[94,17.38,"stable"],[92,17.15,"stable"]],1],
+[41,"Nb","Niobium",92.906,"TM",5,5,5,5,[2,8,18,12,1],"[Kr] 4d⁴ 5s¹",1.6,8.57,2750,5017,1801,"Hatchett",20,[405.9,407.9],[[93,100,"stable"]],1],
+[42,"Mo","Molybdenum",95.95,"TM",6,5,6,5,[2,8,18,13,1],"[Kr] 4d⁵ 5s¹",2.16,10.22,2896,4912,1778,"Scheele",1.2,[379.8,386.4,313.3],[[98,24.39,"stable"],[96,16.67,"stable"],[95,15.72,"stable"]],1],
+[43,"Tc","Technetium",98,"TM",7,5,7,5,[2,8,18,13,2],"[Kr] 4d⁵ 5s²",1.9,11.5,2430,4538,1937,"Perrier & Segrè",0,[],[[98,null,"t½ 4.2 My"],[99,null,"t½ 211 ky"],[97,null,"t½ 2.6 My"]],0],
+[44,"Ru","Ruthenium",101.07,"TM",8,5,8,5,[2,8,18,15,1],"[Kr] 4d⁷ 5s¹",2.2,12.37,2607,4423,1844,"Klaus",0.001,[349.9,372.7],[[102,31.55,"stable"],[104,18.62,"stable"],[101,17.06,"stable"]],1],
+[45,"Rh","Rhodium",102.91,"TM",9,5,9,5,[2,8,18,16,1],"[Kr] 4d⁸ 5s¹",2.28,12.41,2237,3968,1803,"Wollaston",0.001,[339.7,369.2],[[103,100,"stable"]],1],
+[46,"Pd","Palladium",106.42,"TM",10,5,10,5,[2,8,18,18],"[Kr] 4d¹⁰",2.20,12.02,1828.1,3236,1803,"Wollaston",0.015,[340.5,363.5],[[106,27.33,"stable"],[108,26.46,"stable"],[105,22.33,"stable"]],1],
+[47,"Ag","Silver",107.87,"TM",11,5,11,5,[2,8,18,18,1],"[Kr] 4d¹⁰ 5s¹",1.93,10.501,1234.9,2435,0,"known since antiquity",0.075,[328.1,338.3],[[107,51.84,"stable"],[109,48.16,"stable"]],0],
+[48,"Cd","Cadmium",112.41,"TM",12,5,12,5,[2,8,18,18,2],"[Kr] 4d¹⁰ 5s²",1.69,8.69,594.2,1040,1817,"Stromeyer",0.15,[643.8,508.6,480.0,467.8],[[114,28.73,"stable"],[112,24.13,"stable"],[111,12.80,"stable"]],0],
+[49,"In","Indium",114.82,"PT",13,5,13,5,[2,8,18,18,3],"[Kr] 4d¹⁰ 5s² 5p¹",1.78,7.31,429.7,2345,1863,"Reich & Richter",0.25,[451.1,410.2,325.6],[[115,95.71,"t½ 4.4e14 y"],[113,4.29,"stable"]],0],
+[50,"Sn","Tin",118.71,"PT",14,5,14,5,[2,8,18,18,4],"[Kr] 4d¹⁰ 5s² 5p²",1.96,7.287,505.1,2875,0,"known since antiquity",2.3,[283.9,286.3,317.5,380.1],[[120,32.58,"stable"],[118,24.22,"stable"],[116,14.54,"stable"]],1],
+[51,"Sb","Antimony",121.76,"MD",15,5,15,5,[2,8,18,18,5],"[Kr] 4d¹⁰ 5s² 5p³",2.05,6.685,903.8,1860,0,"known since antiquity",0.2,[259.8,252.9,231.1],[[121,57.21,"stable"],[123,42.79,"stable"]],1],
+[52,"Te","Tellurium",127.60,"MD",16,5,16,5,[2,8,18,18,6],"[Kr] 4d¹⁰ 5s² 5p⁴",2.1,6.232,722.7,1261,1782,"Müller von Reichenstein",0.001,[214.3,225.9,238.6],[[130,34.08,"t½ 7e20 y"],[128,31.74,"t½ 2.2e24 y"],[126,18.84,"stable"]],1],
+[53,"I","Iodine",126.90,"HG",17,5,17,5,[2,8,18,18,7],"[Kr] 4d¹⁰ 5s² 5p⁵",2.66,4.93,386.9,457.4,1811,"Courtois",0.45,[206.2,183.0],[[127,100,"stable"]],1],
+[54,"Xe","Xenon",131.29,"NG",18,5,18,5,[2,8,18,18,8],"[Kr] 4d¹⁰ 5s² 5p⁶",2.6,0.005887,161.4,165.1,1898,"Ramsay & Travers",0.00003,[418.0,425.0,429.6,446.2,467.1,473.4,484.4,491.7,502.8,518.8,526.2,529.2,541.9,565.9,590.5,597.6,603.6,609.7],[[132,26.91,"stable"],[129,26.44,"stable"],[131,21.18,"stable"]],0],
+[55,"Cs","Caesium",132.91,"AM",1,6,1,6,[2,8,18,18,8,1],"[Xe] 6s¹",0.79,1.873,301.7,944,1860,"Bunsen & Kirchhoff",3,[852.1,894.3,455.5,459.3],[[133,100,"stable"]],0],
+[56,"Ba","Barium",137.33,"AE",2,6,2,6,[2,8,18,18,8,2],"[Xe] 6s²",0.89,3.594,1000,2118,1808,"Davy",425,[553.5,493.4,455.4,649.9,611.1],[[138,71.70,"stable"],[137,11.23,"stable"],[136,7.85,"stable"]],0],
+[57,"La","Lanthanum",138.91,"LN",null,6,3,9,[2,8,18,18,9,2],"[Xe] 5d¹ 6s²",1.10,6.145,1193,3737,1839,"Mosander",39,[428.8,418.7,518.7],[[139,99.91,"stable"],[138,0.09,"t½ 1.02e11 y"]],1],
+[58,"Ce","Cerium",140.12,"LN",null,6,4,9,[2,8,18,19,9,2],"[Xe] 4f¹ 5d¹ 6s²",1.12,6.77,1068,3716,1803,"Berzelius & Hisinger",66.5,[456.2,518.7,418.7],[[140,88.45,"stable"],[142,11.11,"t½ 5e16 y"],[138,0.251,"stable"]],1],
+[59,"Pr","Praseodymium",140.91,"LN",null,6,5,9,[2,8,18,21,8,2],"[Xe] 4f³ 6s²",1.13,6.773,1208,3793,1885,"von Welsbach",9.2,[495.1,469.4],[[141,100,"stable"]],1],
+[60,"Nd","Neodymium",144.24,"LN",null,6,6,9,[2,8,18,22,8,2],"[Xe] 4f⁴ 6s²",1.14,7.007,1297,3347,1885,"von Welsbach",41.5,[463.4,471.9],[[142,27.15,"stable"],[146,17.19,"stable"],[144,23.80,"t½ 2.3e15 y"]],1],
+[61,"Pm","Promethium",145,"LN",null,6,7,9,[2,8,18,23,8,2],"[Xe] 4f⁵ 6s²",1.13,7.26,1315,3273,1945,"Marinsky et al.",0,[],[[145,null,"t½ 17.7 y"],[147,null,"t½ 2.62 y"]],0],
+[62,"Sm","Samarium",150.36,"LN",null,6,8,9,[2,8,18,24,8,2],"[Xe] 4f⁶ 6s²",1.17,7.52,1345,2067,1879,"Boisbaudran",7.05,[429.7,503.0],[[152,26.75,"stable"],[154,22.75,"stable"],[147,15.00,"t½ 1.06e11 y"]],1],
+[63,"Eu","Europium",151.96,"LN",null,6,9,9,[2,8,18,25,8,2],"[Xe] 4f⁷ 6s²",1.2,5.243,1099,1802,1901,"Demarçay",2,[462.7,459.4],[[153,52.19,"stable"],[151,47.81,"t½ 4.6e18 y"]],1],
+[64,"Gd","Gadolinium",157.25,"LN",null,6,10,9,[2,8,18,25,9,2],"[Xe] 4f⁷ 5d¹ 6s²",1.2,7.895,1585,3546,1880,"de Marignac",6.2,[432.6,436.0],[[158,24.84,"stable"],[160,21.86,"stable"],[156,20.47,"stable"]],1],
+[65,"Tb","Terbium",158.93,"LN",null,6,11,9,[2,8,18,27,8,2],"[Xe] 4f⁹ 6s²",1.2,8.229,1629,3503,1843,"Mosander",1.2,[432.6,547.1],[[159,100,"stable"]],1],
+[66,"Dy","Dysprosium",162.50,"LN",null,6,12,9,[2,8,18,28,8,2],"[Xe] 4f¹⁰ 6s²",1.22,8.55,1680,2840,1886,"Boisbaudran",5.2,[426.1,501.7],[[164,28.26,"stable"],[162,25.51,"stable"],[163,24.91,"stable"]],1],
+[67,"Ho","Holmium",164.93,"LN",null,6,13,9,[2,8,18,29,8,2],"[Xe] 4f¹¹ 6s²",1.23,8.795,1734,2993,1878,"Cleve & Soret",1.3,[410.4,424.7],[[165,100,"stable"]],1],
+[68,"Er","Erbium",167.26,"LN",null,6,14,9,[2,8,18,30,8,2],"[Xe] 4f¹² 6s²",1.24,9.066,1802,3141,1843,"Mosander",3.5,[400.8,522.6],[[166,33.61,"stable"],[168,26.78,"stable"],[167,22.93,"stable"]],1],
+[69,"Tm","Thulium",168.93,"LN",null,6,15,9,[2,8,18,31,8,2],"[Xe] 4f¹³ 6s²",1.25,9.321,1818,2223,1879,"Cleve",0.52,[313.9,410.6],[[169,100,"stable"]],1],
+[70,"Yb","Ytterbium",173.05,"LN",null,6,16,9,[2,8,18,32,8,2],"[Xe] 4f¹⁴ 6s²",1.1,6.90,1097,1469,1878,"de Marignac",3.2,[398.8,555.6],[[174,31.83,"stable"],[172,21.68,"stable"],[173,16.12,"stable"]],1],
+[71,"Lu","Lutetium",174.97,"LN",null,6,17,9,[2,8,18,32,9,2],"[Xe] 4f¹⁴ 5d¹ 6s²",1.27,9.84,1925,3675,1907,"Urbain",0.8,[415.6,451.6],[[175,97.41,"stable"],[176,2.59,"t½ 3.7e10 y"]],1],
+[72,"Hf","Hafnium",178.49,"TM",4,6,4,6,[2,8,18,32,10,2],"[Xe] 4f¹⁴ 5d² 6s²",1.3,13.31,2506,4876,1923,"Coster & Hevesy",3,[350.1,361.3],[[180,35.08,"stable"],[178,27.28,"stable"],[177,18.60,"stable"]],1],
+[73,"Ta","Tantalum",180.95,"TM",5,6,5,6,[2,8,18,32,11,2],"[Xe] 4f¹⁴ 5d³ 6s²",1.5,16.654,3290,5731,1802,"Ekeberg",2,[331.3,271.1],[[181,99.988,"stable"],[180,0.012,"t½ 8.1 h"]],1],
+[74,"W","Tungsten",183.84,"TM",6,6,6,6,[2,8,18,32,12,2],"[Xe] 4f¹⁴ 5d⁴ 6s²",2.36,19.25,3695,5828,1783,"Elhuyar brothers",1.25,[400.9,407.4,429.5],[[184,30.64,"stable"],[186,28.43,"stable"],[182,26.50,"stable"]],1],
+[75,"Re","Rhenium",186.21,"TM",7,6,7,6,[2,8,18,32,13,2],"[Xe] 4f¹⁴ 5d⁵ 6s²",1.9,21.02,3459,5869,1925,"Noddack, Tacke & Berg",0.0007,[346.0,408.0],[[187,62.60,"t½ 4.1e10 y"],[185,37.40,"stable"]],1],
+[76,"Os","Osmium",190.23,"TM",8,6,8,6,[2,8,18,32,14,2],"[Xe] 4f¹⁴ 5d⁶ 6s²",2.2,22.59,3306,5285,1803,"Tennant",0.015,[330.2,291.2],[[192,40.78,"stable"],[190,26.26,"stable"],[189,16.15,"stable"]],1],
+[77,"Ir","Iridium",192.22,"TM",9,6,9,6,[2,8,18,32,15,2],"[Xe] 4f¹⁴ 5d⁷ 6s²",2.20,22.56,2719,4701,1803,"Tennant",0.001,[322.2,351.2],[[193,62.7,"stable"],[191,37.3,"stable"]],1],
+[78,"Pt","Platinum",195.08,"TM",10,6,10,6,[2,8,18,32,17,1],"[Xe] 4f¹⁴ 5d⁹ 6s¹",2.28,21.46,2041.4,4098,1735,"de Ulloa",0.015,[306.5,265.9],[[195,33.78,"stable"],[194,32.86,"stable"],[196,25.21,"stable"]],1],
+[79,"Au","Gold",196.97,"TM",11,6,11,6,[2,8,18,32,18,1],"[Xe] 4f¹⁴ 5d¹⁰ 6s¹",2.54,19.282,1337.3,3129,0,"known since antiquity",0.004,[267.6,242.8],[[197,100,"stable"]],1],
+[80,"Hg","Mercury",200.59,"TM",12,6,12,6,[2,8,18,32,18,2],"[Xe] 4f¹⁴ 5d¹⁰ 6s²",2.00,13.534,234.3,629.9,0,"known since antiquity",0.085,[404.7,435.8,546.1,577.0,579.1],[[202,29.86,"stable"],[200,23.10,"stable"],[199,16.87,"stable"]],0],
+[81,"Tl","Thallium",204.38,"PT",13,6,13,6,[2,8,18,32,18,3],"[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p¹",1.62,11.85,577,1746,1861,"Crookes",0.85,[535.0,377.6,351.9],[[205,70.48,"stable"],[203,29.52,"stable"]],0],
+[82,"Pb","Lead",207.2,"PT",14,6,14,6,[2,8,18,32,18,4],"[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p²",2.33,11.342,600.6,2022,0,"known since antiquity",14,[405.8,368.3,283.3],[[208,52.4,"stable"],[206,24.1,"stable"],[207,22.1,"stable"]],0],
+[83,"Bi","Bismuth",208.98,"PT",15,6,15,6,[2,8,18,32,18,5],"[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p³",2.02,9.807,544.6,1837,1500,"Agricola (described)",0.0085,[306.8,298.9,289.8],[[209,100,"t½ 2.01e19 y"]],1],
+[84,"Po","Polonium",209,"PT",16,6,16,6,[2,8,18,32,18,6],"[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁴",2.0,9.32,527,1235,1898,"Marie & Pierre Curie",0,[],[[209,null,"t½ 125 y"],[210,null,"t½ 138.4 d · “radium F”"],[208,null,"t½ 2.90 y"]],0],
+[85,"At","Astatine",210,"HG",17,6,17,6,[2,8,18,32,18,7],"[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁵",2.2,null,575,610,1940,"Corson, MacKenzie & Segrè",0,[],[[210,null,"t½ 8.1 h"],[211,null,"t½ 7.2 h"]],0],
+[86,"Rn","Radon",222,"NG",18,6,18,6,[2,8,18,32,18,8],"[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁶",null,0.00973,202,211.5,1900,"Dorn",0,[],[[222,null,"t½ 3.82 d"],[220,null,"t½ 55.6 s"],[219,null,"t½ 3.96 s"]],0],
+[87,"Fr","Francium",223,"AM",1,7,1,7,[2,8,18,32,18,8,1],"[Rn] 7s¹",0.7,null,300,950,1939,"Perey",0,[718.0],[[223,null,"t½ 22.0 min"]],1],
+[88,"Ra","Radium",226,"AE",2,7,2,7,[2,8,18,32,18,8,2],"[Rn] 7s²",0.9,5.5,973,2010,1898,"Marie & Pierre Curie",0,[482.5,468.2],[[226,null,"t½ 1600 y"],[228,null,"t½ 5.75 y"]],1],
+[89,"Ac","Actinium",227,"AC",null,7,3,10,[2,8,18,32,18,9,2],"[Rn] 6d¹ 7s²",1.1,10.02,1323,3471,1899,"Debierne",0,[],[[227,null,"t½ 21.8 y"]],0],
+[90,"Th","Thorium",232.04,"AC",null,7,4,10,[2,8,18,32,18,10,2],"[Rn] 6d² 7s²",1.3,11.72,2023,5061,1829,"Berzelius",9.6,[401.9,383.3],[[232,100,"t½ 1.4e10 y"]],1],
+[91,"Pa","Protactinium",231.04,"AC",null,7,5,10,[2,8,18,32,20,9,2],"[Rn] 5f² 6d¹ 7s²",1.5,15.37,1841,4300,1913,"Fajans & Göhring",0,[],[[231,null,"t½ 32,760 y"]],0],
+[92,"U","Uranium",238.03,"AC",null,7,6,10,[2,8,18,32,21,9,2],"[Rn] 5f³ 6d¹ 7s²",1.38,18.95,1405.3,4404,1789,"Klaproth",2.7,[424.4,436.2,385.5],[[238,99.2745,"t½ 4.47 By"],[235,0.7200,"t½ 704 My"],[234,0.0055,"t½ 245 ky"]],1],
+[93,"Np","Neptunium",237,"AC",null,7,7,10,[2,8,18,32,22,9,2],"[Rn] 5f⁴ 6d¹ 7s²",1.36,20.45,917,4273,1940,"McMillan & Abelson",0,[],[[237,null,"t½ 2.14 My"]],0],
+[94,"Pu","Plutonium",244,"AC",null,7,8,10,[2,8,18,32,24,8,2],"[Rn] 5f⁶ 7s²",1.28,19.84,912.5,3501,1940,"Seaborg et al.",0,[],[[244,null,"t½ 80 My"],[239,null,"t½ 24,110 y"]],0],
+[95,"Am","Americium",243,"AC",null,7,9,10,[2,8,18,32,25,8,2],"[Rn] 5f⁷ 7s²",1.13,13.69,1449,2880,1944,"Seaborg et al.",0,[],[[243,null,"t½ 7370 y"],[241,null,"t½ 432.6 y"]],0],
+[96,"Cm","Curium",247,"AC",null,7,10,10,[2,8,18,32,25,9,2],"[Rn] 5f⁷ 6d¹ 7s²",1.28,13.51,1613,3383,1944,"Seaborg et al.",0,[],[[247,null,"t½ 15.6 My"],[248,null,"t½ 348 ky"]],0],
+[97,"Bk","Berkelium",247,"AC",null,7,11,10,[2,8,18,32,27,8,2],"[Rn] 5f⁹ 7s²",1.3,14.79,1259,2900,1949,"Thompson, Ghiorso & Seaborg",0,[],[[247,null,"t½ 1380 y"]],0],
+[98,"Cf","Californium",251,"AC",null,7,12,10,[2,8,18,32,28,8,2],"[Rn] 5f¹⁰ 7s²",1.3,15.1,1173,1743,1950,"Thompson et al.",0,[],[[251,null,"t½ 898 y"],[249,null,"t½ 351 y"]],0],
+[99,"Es","Einsteinium",252,"AC",null,7,13,10,[2,8,18,32,29,8,2],"[Rn] 5f¹¹ 7s²",1.3,8.84,1133,null,1952,"Ghiorso et al.",0,[],[[252,null,"t½ 471.7 d"]],0],
+[100,"Fm","Fermium",257,"AC",null,7,14,10,[2,8,18,32,30,8,2],"[Rn] 5f¹² 7s²",1.3,null,1800,null,1952,"Ghiorso et al.",0,[],[[257,null,"t½ 100.5 d"]],0],
+[101,"Md","Mendelevium",258,"AC",null,7,15,10,[2,8,18,32,31,8,2],"[Rn] 5f¹³ 7s²",1.3,null,1100,null,1955,"Ghiorso et al.",0,[],[[258,null,"t½ 51.5 d"]],0],
+[102,"No","Nobelium",259,"AC",null,7,16,10,[2,8,18,32,32,8,2],"[Rn] 5f¹⁴ 7s²",1.3,null,1100,null,1966,"Dubna (Flerov et al.)",0,[],[[259,null,"t½ 58 min"]],0],
+[103,"Lr","Lawrencium",266,"AC",null,7,17,10,[2,8,18,32,32,8,3],"[Rn] 5f¹⁴ 7s² 7p¹",null,null,1900,null,1961,"Ghiorso et al.",0,[],[[266,null,"t½ 11 h"]],0],
+[104,"Rf","Rutherfordium",267,"TM",4,7,4,7,[2,8,18,32,32,10,2],"[Rn] 5f¹⁴ 6d² 7s²",null,null,null,null,1969,"Dubna / Berkeley",0,[],[[267,null,"t½ 1.3 h"]],0],
+[105,"Db","Dubnium",268,"TM",5,7,5,7,[2,8,18,32,32,11,2],"[Rn] 5f¹⁴ 6d³ 7s²",null,null,null,null,1970,"Dubna / Berkeley",0,[],[[268,null,"t½ ≈ 28 h"]],0],
+[106,"Sg","Seaborgium",269,"TM",6,7,6,7,[2,8,18,32,32,12,2],"[Rn] 5f¹⁴ 6d⁴ 7s²",null,null,null,null,1974,"Ghiorso et al.",0,[],[[269,null,"t½ 14 min"]],0],
+[107,"Bh","Bohrium",270,"TM",7,7,7,7,[2,8,18,32,32,13,2],"[Rn] 5f¹⁴ 6d⁵ 7s²",null,null,null,null,1981,"Armbruster et al. (GSI)",0,[],[[270,null,"t½ 61 s"]],0],
+[108,"Hs","Hassium",269,"TM",8,7,8,7,[2,8,18,32,32,14,2],"[Rn] 5f¹⁴ 6d⁶ 7s²",null,null,null,null,1984,"GSI Darmstadt",0,[],[[269,null,"t½ 16 s"]],0],
+[109,"Mt","Meitnerium",278,"TM",9,7,9,7,[2,8,18,32,32,15,2],"[Rn] 5f¹⁴ 6d⁷ 7s² (pred.)",null,null,null,null,1982,"GSI Darmstadt",0,[],[[278,null,"t½ ≈ 4.5 s"]],0],
+[110,"Ds","Darmstadtium",281,"TM",10,7,10,7,[2,8,18,32,32,16,2],"[Rn] 5f¹⁴ 6d⁸ 7s² (pred.)",null,null,null,null,1994,"GSI Darmstadt",0,[],[[281,null,"t½ ≈ 11 s"]],0],
+[111,"Rg","Roentgenium",282,"TM",11,7,11,7,[2,8,18,32,32,17,2],"[Rn] 5f¹⁴ 6d⁹ 7s² (pred.)",null,null,null,null,1994,"GSI Darmstadt",0,[],[[282,null,"t½ ≈ 100 s"]],0],
+[112,"Cn","Copernicium",285,"TM",12,7,12,7,[2,8,18,32,32,18,2],"[Rn] 5f¹⁴ 6d¹⁰ 7s² (pred.)",null,null,null,null,1996,"GSI Darmstadt",0,[],[[285,null,"t½ ≈ 28 s"]],0],
+[113,"Nh","Nihonium",286,"PT",13,7,13,7,[2,8,18,32,32,18,3],"[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p¹ (pred.)",null,null,null,null,2004,"Riken / JINR",0,[],[[286,null,"t½ ≈ 10 s"]],0],
+[114,"Fl","Flerovium",289,"PT",14,7,14,7,[2,8,18,32,32,18,4],"[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p² (pred.)",null,null,null,null,1999,"JINR Dubna",0,[],[[289,null,"t½ ≈ 2.6 s"]],0],
+[115,"Mc","Moscovium",290,"PT",15,7,15,7,[2,8,18,32,32,18,5],"[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p³ (pred.)",null,null,null,null,2003,"JINR / LLNL",0,[],[[290,null,"t½ ≈ 0.65 s"]],0],
+[116,"Lv","Livermorium",293,"PT",16,7,16,7,[2,8,18,32,32,18,6],"[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁴ (pred.)",null,null,null,null,2000,"JINR / LLNL",0,[],[[293,null,"t½ ≈ 60 ms"]],0],
+[117,"Ts","Tennessine",294,"HG",17,7,17,7,[2,8,18,32,32,18,7],"[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁵ (pred.)",null,null,null,null,2010,"JINR / ORNL",0,[],[[294,null,"t½ ≈ 50 ms"]],0],
+[118,"Og","Oganesson",294,"NG",18,7,18,7,[2,8,18,32,32,18,8],"[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁶ (pred.)",null,null,null,null,2006,"JINR / LLNL",0,[],[[294,null,"t½ ≈ 0.7 ms"]],0]
+];
+const ELEM=EL.map(r=>({Z:r[0],sym:r[1],name:r[2],mass:r[3],cat:r[4],group:r[5],period:r[6],x:r[7],y:r[8],
+  shells:r[9],cfg:r[10],en:r[11],dens:r[12],melt:r[13],boil:r[14],year:r[15],disc:r[16],crust:r[17],
+  spec:r[18],iso:r[19],approx:!!r[20],neutrons:Math.round(r[3])-r[0],
+  block:(r[10].match(/([spdf])[¹²³⁴⁵⁶⁷⁸⁹⁰]*\s*$/)||[])[1]||'s'}));
+const BYZ=Object.fromEntries(ELEM.map(e=>[e.Z,e]));
+const BYS=Object.fromEntries(ELEM.map(e=>[e.sym,e]));
+
+const FACTS={1:"The universe's simplest and most abundant atom — three quarters of all normal matter by mass.",2:"So light it escapes Earth's gravity; detected in the Sun's spectrum 8 years before being found on Earth.",3:"The lightest metal — soft enough to cut, and it floats on water (while reacting with it).",4:"Transparent to X-rays; used in spacecraft and telescope mirrors.",5:"Forms the strongest covalent bonds; borosilicate glass shrugs off thermal shock.",6:"Backbone of all known life; the same element makes diamond, graphite and graphene.",7:"78% of the air you breathe, yet nearly inert — its triple bond is among nature's strongest.",8:"The great burner: 46% of Earth's crust by mass, mostly locked in rock.",9:"The most electronegative, most reactive element — attacks glass, water, even noble gases.",10:"The reddish-orange glow of classic signs; forms no stable neutral compound.",11:"Explodes on water, yet with chlorine it makes table salt; street lamps burn on its yellow D-lines.",12:"Burns with blinding white light; the central atom of every chlorophyll molecule.",13:"Once more precious than gold; now recycled nearly forever.",14:"The semiconductor that runs the information age — from sand to microchip.",15:"Discovered in 1669 from boiled-down urine; glows in the dark, vital for DNA and ATP.",16:"The brimstone of the ancients; volcanic vents and struck matches.",17:"A choking green gas whose compounds sanitize water for billions.",18:"Almost 1% of the atmosphere; the name means 'the lazy one' — it earns it.",19:"Ignites on contact with water; your nerves run on potassium ion gates.",20:"Bones, shells, limestone — and a crimson flash in the flame test.",22:"Strength of steel at half the weight; beloved by aerospace and hip implants.",24:"Its name means colour: ruby's red and chrome's shine both come from it.",26:"Forged in stellar cores, endpoint of fusion; heart of our planet and our blood.",29:"The first metal humans shaped; its green patina roofs old cathedrals.",31:"Melts in your hand at 29.8 °C — the classic trick spoon of chemistry dinners.",35:"One of only two elements liquid at room temperature; deep red and fuming.",47:"Best electrical conductor of all metals; tarnished by sulfur in air and in eggs.",49:"'Cries' when bent; touchscreens owe it their transparent electrodes.",53:"Violet vapour; your thyroid hoards every atom it can catch.",54:"The noble gas that reacts — xenon fluorides broke the 'inert' dogma in 1962.",55:"Defines the second: 9,192,631,770 oscillations of its hyperfine transition.",74:"Highest melting point of any metal — old bulb filaments, modern dart tips.",78:"So unreactive the conquistadors dismissed it as fake silver.",79:"Every gram ever mined still exists; only aqua regia dissolves it.",80:"The liquid metal — alchemists' quicksilver.",82:"Roman plumbing gave it the symbol Pb; dense, soft, radiation-shielding.",84:"Discovered by Marie Curie from tonnes of pitchblende; lethally radioactive.",86:"Seeps from bedrock into basements — second leading cause of lung cancer.",87:"Perhaps 30 grams exist on all of Earth at any moment.",88:"Once painted on watch dials; the Radium Girls tragedy rewrote lab safety.",92:"Heaviest primordial element; isotope ²³⁵ powers reactors.",94:"Made in Berkeley in 1940; powers deep-space probes in RTGs.",95:"The radioactive heart of every household smoke detector.",98:"A few micrograms cost millions; used to start up nuclear reactors.",101:"Named for Dmitri Mendeleev — the first element named after a person.",118:"The heaviest atom ever made — a handful of atoms, gone in under a millisecond."};
+
+/* ================================================================
+   2 · CHEMIST'S AUX DATA
+================================================================ */
+const MOL={
+1:["H₂","linear diatomic · σ bond",436,"H–H bond dissociation"],2:["He","monatomic gas",0,"no bond — already atomic"],
+3:["Li","bcc metallic lattice",159,"ΔaH° (cohesive), per mol Li"],4:["Be","hcp metallic lattice",324,"ΔaH° (cohesive)"],
+5:["B","β-rhombohedral network",573,"ΔaH° per mol B"],6:["C (graphite)","stacked sp² layer network",717,"ΔaH° per mol C"],
+7:["N₂","linear · N≡N triple bond",945,"N≡N dissociation"],8:["O₂","linear · diradical",498,"O=O dissociation"],
+9:["F₂","linear",159,"F–F dissociation"],10:["Ne","monatomic gas",0,"no bond"],
+11:["Na","bcc metallic lattice",108,"ΔaH° (cohesive)"],12:["Mg","hcp metallic lattice",148,"ΔaH° (cohesive)"],
+13:["Al","fcc metallic lattice",330,"ΔaH° (cohesive)"],14:["Si","diamond-cubic network",456,"ΔaH° per mol Si"],
+15:["P₄ (white)","tetrahedral cage molecule",316,"ΔaH° per mol P · P–P ≈ 201"],16:["S₈","crown ring molecule",277,"ΔaH° per mol S · S–S ≈ 266"],
+17:["Cl₂","linear",243,"Cl–Cl dissociation"],18:["Ar","monatomic gas",0,"no bond"],
+19:["K","bcc metallic lattice",89,"ΔaH° (cohesive)"],20:["Ca","fcc metallic lattice",178,"ΔaH° (cohesive)"],
+21:["Sc","hcp metallic lattice",378,"ΔaH°"],22:["Ti","hcp metallic lattice",470,"ΔaH°"],
+23:["V","bcc metallic lattice",514,"ΔaH°"],24:["Cr","bcc metallic lattice",397,"ΔaH°"],
+25:["Mn","bcc (complex cubic)",281,"ΔaH°"],26:["Fe","bcc metallic lattice",415,"ΔaH°"],
+27:["Co","hcp metallic lattice",425,"ΔaH°"],28:["Ni","fcc metallic lattice",430,"ΔaH°"],
+29:["Cu","fcc metallic lattice",338,"ΔaH°"],30:["Zn","hcp metallic lattice",130,"ΔaH°"],
+31:["Ga","orthorhombic (Ga₂ pairs)",274,"ΔaH°"],32:["Ge","diamond-cubic network",377,"ΔaH° per mol Ge"],
+33:["As","layered rhombohedral",297,"ΔaH° per mol As"],34:["Se","helical chains",227,"ΔaH° per mol Se"],
+35:["Br₂","linear · molecular liquid",193,"Br–Br dissociation"],36:["Kr","monatomic gas",0,"no bond"],
+37:["Rb","bcc metallic lattice",86,"ΔaH°"],38:["Sr","fcc metallic lattice",164,"ΔaH°"],
+39:["Y","hcp metallic lattice",422,"ΔaH°"],40:["Zr","hcp metallic lattice",608,"ΔaH°"],
+41:["Nb","bcc metallic lattice",726,"ΔaH°"],42:["Mo","bcc metallic lattice",658,"ΔaH°"],
+43:["Tc","hcp metallic lattice",680,"ΔaH°"],44:["Ru","hcp metallic lattice",650,"ΔaH°"],
+45:["Rh","fcc metallic lattice",557,"ΔaH°"],46:["Pd","fcc metallic lattice",378,"ΔaH°"],
+47:["Ag","fcc metallic lattice",284,"ΔaH°"],48:["Cd","hcp metallic lattice",112,"ΔaH°"],
+49:["In","tetragonal metal",243,"ΔaH°"],50:["Sn (white)","tetragonal metal",302,"ΔaH°"],
+51:["Sb","layered rhombohedral",264,"ΔaH°"],52:["Te","helical chains",197,"ΔaH° per mol Te"],
+53:["I₂","linear · molecular solid",151,"I–I dissociation"],54:["Xe","monatomic gas",0,"no bond"],
+55:["Cs","bcc metallic lattice",78,"ΔaH°"],56:["Ba","bcc metallic lattice",180,"ΔaH°"],
+57:["La","hcp metallic lattice",431,"ΔaH°"],58:["Ce","fcc metallic lattice",423,"ΔaH°"],
+59:["Pr","hcp metallic lattice",360,"ΔaH°"],60:["Nd","hcp metallic lattice",322,"ΔaH°"],
+61:["Pm","hcp metallic lattice",300,"ΔaH° (est.)"],62:["Sm","rhombohedral metal",209,"ΔaH°"],
+63:["Eu","bcc metallic lattice",182,"ΔaH°"],64:["Gd","hcp metallic lattice",398,"ΔaH°"],
+65:["Tb","hcp metallic lattice",389,"ΔaH°"],66:["Dy","hcp metallic lattice",302,"ΔaH°"],
+67:["Ho","hcp metallic lattice",301,"ΔaH°"],68:["Er","hcp metallic lattice",313,"ΔaH°"],
+69:["Tm","hcp metallic lattice",232,"ΔaH°"],70:["Yb","fcc metallic lattice",153,"ΔaH°"],
+71:["Lu","hcp metallic lattice",428,"ΔaH°"],72:["Hf","hcp metallic lattice",619,"ΔaH°"],
+73:["Ta","bcc metallic lattice",782,"ΔaH°"],74:["W","bcc metallic lattice",849,"ΔaH° — strongest metal bonding"],
+75:["Re","hcp metallic lattice",791,"ΔaH°"],76:["Os","hcp metallic lattice",791,"ΔaH°"],
+77:["Ir","fcc metallic lattice",665,"ΔaH°"],78:["Pt","fcc metallic lattice",565,"ΔaH°"],
+79:["Au","fcc metallic lattice",366,"ΔaH°"],80:["Hg","metallic LIQUID",61,"ΔaH° — weakest metal bonding"],
+81:["Tl","hcp metallic lattice",182,"ΔaH°"],82:["Pb","fcc metallic lattice",195,"ΔaH°"],
+83:["Bi","rhombohedral metal",207,"ΔaH°"],84:["Po","simple cubic metal",134,"ΔaH°"],
+85:["At₂","linear (predicted)",116,"At–At (est.)"],86:["Rn","monatomic gas",0,"no bond"],
+87:["Fr","bcc (predicted)",75,"ΔaH° (est.)"],88:["Ra","bcc metallic lattice",163,"ΔaH°"],
+89:["Ac","fcc metallic lattice",357,"ΔaH°"],90:["Th","fcc metallic lattice",598,"ΔaH°"],
+91:["Pa","tetragonal metal",530,"ΔaH°"],92:["U","orthorhombic metal",533,"ΔaH°"],
+93:["Np","orthorhombic metal",500,"ΔaH° (est.)"],94:["Pu","monoclinic metal",431,"ΔaH°"],
+95:["Am","dhcp metal",290,"ΔaH° (est.)"],96:["Cm","fcc metal",290,"ΔaH° (est.)"],
+97:["Bk","dhcp metal",300,"ΔaH° (est.)"],98:["Cf","fcc metal",200,"ΔaH° (est.)"],
+99:["Es","fcc metal",142,"ΔaH° (est.)"]};
+
+const OX={1:"+1, −1",2:"0",3:"+1",4:"+2",5:"+3",6:"−4, +2, +4",7:"−3, +3, +5",8:"−2 (+2 in OF₂)",9:"−1",10:"0",
+11:"+1",12:"+2",13:"+3",14:"−4, +4",15:"−3, +3, +5",16:"−2, +4, +6",17:"−1, +1, +3, +5, +7",18:"0",19:"+1",20:"+2",
+21:"+3",22:"+2, +3, +4",23:"+2, +3, +4, +5",24:"+2, +3, +6",25:"+2, +4, +7",26:"+2, +3",27:"+2, +3",28:"+2",
+29:"+1, +2",30:"+2",31:"+3",32:"−4, +2, +4",33:"−3, +3, +5",34:"−2, +4, +6",35:"−1, +1, +3, +5",36:"+2",37:"+1",
+38:"+2",39:"+3",40:"+4",41:"+5",42:"+4, +6",43:"+4, +7",44:"+3, +4, +8",45:"+3",46:"+2, +4",47:"+1",48:"+2",
+49:"+3",50:"+2, +4",51:"−3, +3, +5",52:"−2, +4, +6",53:"−1, +1, +5, +7",54:"+2, +4, +6",55:"+1",56:"+2",57:"+3",
+58:"+3, +4",59:"+3",60:"+3",61:"+3",62:"+2, +3",63:"+2, +3",64:"+3",65:"+3",66:"+3",67:"+3",68:"+3",69:"+3",
+70:"+2, +3",71:"+3",72:"+4",73:"+5",74:"+6",75:"+4, +7",76:"+4, +8",77:"+3, +4",78:"+2, +4",79:"+1, +3",
+80:"+1, +2",81:"+1, +3",82:"+2, +4",83:"+3, +5",84:"−2, +2, +4",85:"−1, +1",86:"+2 (predicted)",87:"+1",88:"+2",
+89:"+3",90:"+4",91:"+5",92:"+4, +6",93:"+5",94:"+4",95:"+3",96:"+3",97:"+3",98:"+3",99:"+3",100:"+3",101:"+3",
+102:"+2",103:"+3",104:"+4",105:"+5",106:"+6",112:"+2 (pred.)",113:"+1 (pred.)",114:"+2 (pred.)",117:"−1 (pred.)",118:"0 (pred.)"};
+
+const IE1={1:1312,2:2372,3:520,4:900,5:801,6:1086,7:1402,8:1314,9:1681,10:2081,11:496,12:738,13:578,14:787,15:1012,
+16:1000,17:1251,18:1521,19:419,20:590,21:633,22:659,23:651,24:653,25:717,26:762,27:760,28:737,29:745,30:906,31:579,
+32:762,33:947,34:941,35:1140,36:1351,37:403,38:550,39:600,40:640,41:652,42:684,43:702,44:710,45:720,46:804,47:731,
+48:868,49:558,50:709,51:834,52:869,53:1008,54:1170,55:376,56:503,57:538,58:534,59:527,60:533,61:540,62:545,63:547,
+64:593,65:566,66:573,67:581,68:589,69:597,70:603,71:524,72:659,73:761,74:770,75:760,76:840,77:880,78:870,79:890,
+80:1007,81:589,82:716,83:703,84:812,85:899,86:1037,87:380,88:509,89:499,90:587,91:568,92:598,93:605,94:585,95:578,
+96:581,97:601,98:608,99:619,100:627,101:635,102:642,103:470};
+
+const E0={1:0.00,3:-3.04,4:-1.85,11:-2.71,12:-2.37,13:-1.66,19:-2.93,20:-2.87,21:-2.08,22:-1.63,23:-1.18,24:-0.74,
+25:-1.18,26:-0.44,27:-0.28,28:-0.26,29:0.34,30:-0.76,31:-0.53,37:-2.98,38:-2.89,39:-2.37,40:-1.45,46:0.92,47:0.80,
+48:-0.40,49:-0.34,50:-0.14,55:-3.03,56:-2.90,57:-2.38,58:-2.34,72:-1.55,79:1.50,80:0.85,81:-0.34,82:-0.13,83:0.31};
+
+const RAD={1:31,2:28,3:128,4:96,5:84,6:76,7:71,8:66,9:57,10:58,11:166,12:141,13:121,14:111,15:107,16:105,17:102,18:106,
+19:203,20:176,21:170,22:160,23:153,24:139,25:139,26:132,27:126,28:124,29:132,30:122,31:122,32:120,33:119,34:120,
+35:120,36:116,37:220,38:195,39:190,40:175,41:164,42:154,43:147,44:146,45:142,46:139,47:145,48:144,49:142,50:139,
+51:139,52:138,53:139,54:140,55:244,56:215,57:207,58:204,59:203,60:201,61:199,62:198,63:198,64:196,65:194,66:192,
+67:192,68:189,69:190,70:193,71:187,72:175,73:170,74:162,75:151,76:144,77:141,78:136,79:136,80:132,81:145,82:146,
+83:148,84:140,85:150,86:150,87:260,88:221,89:215,90:206,91:200,92:196,93:190,94:187,95:180,96:169,97:168,98:168,
+99:165,100:167,101:173,102:176,103:161};
+
+const CRYS={3:"bcc",4:"hcp",5:"β-rhombohedral",6:"hexagonal (graphite)",11:"bcc",12:"hcp",13:"fcc",14:"diamond cubic",
+15:"cubic (P₄)",16:"orthorhombic (S₈)",19:"bcc",20:"fcc",21:"hcp",22:"hcp",23:"bcc",24:"bcc",25:"bcc (complex)",
+26:"bcc",27:"hcp",28:"fcc",29:"fcc",30:"hcp",31:"orthorhombic",32:"diamond cubic",33:"rhombohedral",34:"hexagonal",
+35:"orthorhombic",37:"bcc",38:"fcc",39:"hcp",40:"hcp",41:"bcc",42:"bcc",43:"hcp",44:"hcp",45:"fcc",46:"fcc",47:"fcc",
+48:"hcp",49:"tetragonal",50:"tetragonal",51:"rhombohedral",52:"hexagonal",53:"orthorhombic",55:"bcc",56:"bcc",57:"hcp",
+58:"fcc",59:"hcp",60:"hcp",62:"rhombohedral",63:"bcc",64:"hcp",65:"hcp",66:"hcp",67:"hcp",68:"hcp",69:"hcp",70:"fcc",
+71:"hcp",72:"hcp",73:"bcc",74:"bcc",75:"hcp",76:"hcp",77:"fcc",78:"fcc",79:"fcc",80:"rhombohedral",81:"hcp",82:"fcc",
+83:"rhombohedral",84:"simple cubic",88:"bcc",89:"fcc",90:"fcc",91:"tetragonal",92:"orthorhombic",93:"orthorhombic",94:"monoclinic"};
+
+/* isotope proper names (where they exist) */
+const ISONAME={"1|1":"protium","2|1":"deuterium","3|1":"tritium","14|6":"radiocarbon","219|86":"actinon","220|86":"thoron",
+"210|84":"radium F","228|88":"mesothorium I","234|92":"uranium II","235|92":"actinuranium","238|92":"uranium I"};
+
+/* molecule visualization types + diatomic parameters */
+const MOLTYPE={};
+[1,7,8,9,17,35,53,85].forEach(z=>MOLTYPE[z]='di');
+[2,10,18,36,54,86,118].forEach(z=>MOLTYPE[z]='mono');
+MOLTYPE[15]='p4';MOLTYPE[16]='s8';
+[34,52].forEach(z=>MOLTYPE[z]='chain');
+[6,33,51,83].forEach(z=>MOLTYPE[z]='layer');
+[5,14,32].forEach(z=>MOLTYPE[z]='net');
+const molType=z=>MOLTYPE[z]||(MOL[z]?'metal':'unk');
+const BOND={1:1,7:3,8:2,9:1,17:1,35:1,53:1,85:1};
+const BLEN={1:74,7:110,8:121,9:142,17:199,35:228,53:266,85:280};
+
+/* ================================================================
+   3 · CURATED REACTIONS (sorted-symbol keys)
+================================================================ */
+const RX={
+"H|O":{eq:"2 H₂ + O₂ → 2 H₂O",n:"water",dh:-571.6,c:"spark / flame"},
+"Li|O":{eq:"4 Li + O₂ → 2 Li₂O",n:"lithium oxide",dh:-1196,c:"burns on contact"},
+"Na|O":{eq:"4 Na + O₂ → 2 Na₂O",n:"sodium oxide (peroxide also)",dh:-832,c:"burns"},
+"K|O":{eq:"K + O₂ → KO₂",n:"potassium superoxide",dh:-284,c:"ignites · superoxide dominates"},
+"Rb|O":{eq:"Rb + O₂ → RbO₂",n:"rubidium superoxide",dh:-298,c:"spontaneous ignition"},
+"Cs|O":{eq:"Cs + O₂ → CsO₂",n:"caesium superoxide",dh:-300,c:"explosive ignition"},
+"Be|O":{eq:"2 Be + O₂ → 2 BeO",n:"beryllia",dh:-1219,c:"strong heat"},
+"Mg|O":{eq:"2 Mg + O₂ → 2 MgO",n:"magnesia",dh:-1203,c:"ignite · blinding white"},
+"Ca|O":{eq:"2 Ca + O₂ → 2 CaO",n:"quicklime",dh:-1270,c:"burns when heated"},
+"O|Sr":{eq:"2 Sr + O₂ → 2 SrO",n:"strontia",dh:-1184,c:"burns"},
+"Ba|O":{eq:"2 Ba + O₂ → 2 BaO",n:"baryta",dh:-1107,c:"burns (peroxide at high P)"},
+"Al|O":{eq:"4 Al + 3 O₂ → 2 Al₂O₃",n:"alumina",dh:-3351,c:"powder ignites · bulk passivates"},
+"O|Si":{eq:"Si + O₂ → SiO₂",n:"silica",dh:-911,c:"heat"},
+"O|P":{eq:"P₄ + 5 O₂ → P₄O₁₀",n:"phosphorus pentoxide",dh:-2984,c:"white P ignites in air"},
+"O|S":{eq:"S + O₂ → SO₂",n:"sulfur dioxide",dh:-297,c:"burns with blue flame"},
+"O|Se":{eq:"Se + O₂ → SeO₂",n:"selenium dioxide",dh:-242,c:"burns"},
+"C|O":{eq:"C + O₂ → CO₂",n:"carbon dioxide",dh:-394,c:"ignite"},
+"N|O":{eq:"N₂ + O₂ → 2 NO",n:"nitric oxide",dh:180.6,c:"lightning / arc — ENDOTHERMIC"},
+"F|O":{eq:"O₂ + 2 F₂ → 2 OF₂",n:"oxygen difluoride",dh:49,c:"discharge — ENDOTHERMIC"},
+"B|O":{eq:"4 B + 3 O₂ → 2 B₂O₃",n:"boric oxide",dh:-2547,c:"heat"},
+"Ge|O":{eq:"Ge + O₂ → GeO₂",n:"germania",dh:-580,c:"heat"},
+"As|O":{eq:"4 As + 3 O₂ → 2 As₂O₃",n:"arsenic trioxide",dh:-1314,c:"heat"},
+"O|Sb":{eq:"4 Sb + 3 O₂ → 2 Sb₂O₃",n:"antimony trioxide",dh:-1386,c:"heat"},
+"O|Te":{eq:"Te + O₂ → TeO₂",n:"tellurium dioxide",dh:-322,c:"heat"},
+"O|Sc":{eq:"4 Sc + 3 O₂ → 2 Sc₂O₃",n:"scandia",dh:-3816,c:"burns"},
+"O|Y":{eq:"4 Y + 3 O₂ → 2 Y₂O₃",n:"yttria",dh:-3810,c:"heat"},
+"O|Ti":{eq:"Ti + O₂ → TiO₂",n:"titania",dh:-944,c:"ignite"},
+"O|Zr":{eq:"Zr + O₂ → ZrO₂",n:"zirconia",dh:-1101,c:"ignite"},
+"Hf|O":{eq:"Hf + O₂ → HfO₂",n:"hafnia",dh:-1144,c:"ignite"},
+"O|V":{eq:"4 V + 5 O₂ → 2 V₂O₅",n:"vanadia",dh:-3102,c:"heat"},
+"Nb|O":{eq:"4 Nb + 5 O₂ → 2 Nb₂O₅",n:"niobia",dh:-3800,c:"heat"},
+"Cr|O":{eq:"4 Cr + 3 O₂ → 2 Cr₂O₃",n:"chromia",dh:-2279,c:"heat"},
+"Mo|O":{eq:"2 Mo + 3 O₂ → 2 MoO₃",n:"molybdena",dh:-1490,c:"heat"},
+"O|W":{eq:"2 W + 3 O₂ → 2 WO₃",n:"tungsten trioxide",dh:-1686,c:"red heat"},
+"Mn|O":{eq:"Mn + O₂ → MnO₂",n:"manganese dioxide",dh:-520,c:"burns"},
+"Fe|O":{eq:"4 Fe + 3 O₂ → 2 Fe₂O₃",n:"hematite",dh:-1648,c:"rusts slowly · powder burns"},
+"Co|O":{eq:"2 Co + O₂ → 2 CoO",n:"cobalt(II) oxide",dh:-476,c:"heat"},
+"Ni|O":{eq:"2 Ni + O₂ → 2 NiO",n:"nickel oxide",dh:-480,c:"heat"},
+"Cu|O":{eq:"2 Cu + O₂ → 2 CuO",n:"tenorite",dh:-315,c:"red heat"},
+"O|Zn":{eq:"2 Zn + O₂ → 2 ZnO",n:"zinc oxide",dh:-696,c:"burns"},
+"Cd|O":{eq:"2 Cd + O₂ → 2 CdO",n:"cadmia",dh:-516,c:"heat"},
+"Hg|O":{eq:"2 Hg + O₂ → 2 HgO",n:"mercuric oxide",dh:-182,c:"~350 °C, slow"},
+"Ga|O":{eq:"4 Ga + 3 O₂ → 2 Ga₂O₃",n:"gallia",dh:-2178,c:"heat"},
+"In|O":{eq:"4 In + 3 O₂ → 2 In₂O₃",n:"india",dh:-1852,c:"heat"},
+"O|Tl":{eq:"4 Tl + O₂ → 2 Tl₂O",n:"thallium(I) oxide",dh:-358,c:"slow at room temp"},
+"O|Sn":{eq:"Sn + O₂ → SnO₂",n:"cassiterite",dh:-578,c:"heat"},
+"O|Pb":{eq:"2 Pb + O₂ → 2 PbO",n:"litharge",dh:-435,c:"heat"},
+"Bi|O":{eq:"4 Bi + 3 O₂ → 2 Bi₂O₃",n:"bismuth trioxide",dh:-1148,c:"heat"},
+"La|O":{eq:"4 La + 3 O₂ → 2 La₂O₃",n:"lanthana",dh:-3587,c:"tarnishes rapidly"},
+"Ce|O":{eq:"Ce + O₂ → CeO₂",n:"ceria",dh:-1089,c:"tarnishes · sparks on scratching"},
+"O|U":{eq:"U + O₂ → UO₂",n:"urania",dh:-1085,c:"pyrophoric powder"},
+"O|Th":{eq:"Th + O₂ → ThO₂",n:"thoria",dh:-1226,c:"heat"},
+"F|H":{eq:"H₂ + F₂ → 2 HF",n:"hydrogen fluoride",dh:-546.6,c:"explosive even in the dark"},
+"F|Li":{eq:"2 Li + F₂ → 2 LiF",n:"lithium fluoride",dh:-1232,c:"violent"},
+"F|Na":{eq:"2 Na + F₂ → 2 NaF",n:"sodium fluoride",dh:-1147,c:"violent"},
+"F|K":{eq:"2 K + F₂ → 2 KF",n:"potassium fluoride",dh:-1135,c:"explosive"},
+"Be|F":{eq:"Be + F₂ → BeF₂",n:"beryllium fluoride",dh:-1027,c:"vigorous"},
+"F|Mg":{eq:"Mg + F₂ → MgF₂",n:"magnesium fluoride",dh:-1124,c:"vigorous"},
+"Ca|F":{eq:"Ca + F₂ → CaF₂",n:"fluorite",dh:-1228,c:"vigorous"},
+"Al|F":{eq:"2 Al + 3 F₂ → 2 AlF₃",n:"aluminium fluoride",dh:-3021,c:"violent"},
+"F|Si":{eq:"Si + 2 F₂ → SiF₄",n:"silicon tetrafluoride",dh:-1615,c:"spontaneous"},
+"B|F":{eq:"2 B + 3 F₂ → 2 BF₃",n:"boron trifluoride",dh:-2274,c:"spontaneous"},
+"C|F":{eq:"C + 2 F₂ → CF₄",n:"tetrafluoromethane",dh:-934,c:"ignite"},
+"F|N":{eq:"N₂ + 3 F₂ → 2 NF₃",n:"nitrogen trifluoride",dh:-264,c:"electric discharge"},
+"F|S":{eq:"S + 3 F₂ → SF₆",n:"sulfur hexafluoride",dh:-1209,c:"spontaneous"},
+"Cl|F":{eq:"Cl₂ + F₂ → 2 ClF",n:"chlorine monofluoride",dh:-113,c:"controlled mix · excess F₂ → ClF₃"},
+"Br|F":{eq:"Br₂ + 3 F₂ → 2 BrF₃",n:"bromine trifluoride",dh:-602,c:"violent"},
+"F|I":{eq:"I₂ + 5 F₂ → 2 IF₅",n:"iodine pentafluoride",dh:-1670,c:"violent"},
+"F|P":{eq:"2 P + 5 F₂ → 2 PF₅",n:"phosphorus pentafluoride",dh:-3188,c:"ignites"},
+"F|Xe":{eq:"Xe + F₂ → XeF₂",n:"xenon difluoride",dh:-108,c:"UV / 400 °C · excess F₂ → XeF₄, XeF₆"},
+"F|Kr":{eq:"Kr + F₂ → KrF₂",n:"krypton difluoride",dh:60,c:"discharge, −150 °C — ENDOTHERMIC"},
+"F|Rn":{eq:"Rn + F₂ → RnF₂",n:"radon fluoride",dh:null,c:"inferred from radiochemistry"},
+"Cl|H":{eq:"H₂ + Cl₂ → 2 HCl",n:"hydrogen chloride",dh:-184.6,c:"UV light — radical chain"},
+"Cl|Na":{eq:"2 Na + Cl₂ → 2 NaCl",n:"table salt",dh:-822.4,c:"ignite"},
+"Cl|K":{eq:"2 K + Cl₂ → 2 KCl",n:"potassium chloride",dh:-873.4,c:"explosive"},
+"Cl|Li":{eq:"2 Li + Cl₂ → 2 LiCl",n:"lithium chloride",dh:-817,c:"vigorous"},
+"Cl|Rb":{eq:"2 Rb + Cl₂ → 2 RbCl",n:"rubidium chloride",dh:-870,c:"explosive"},
+"Cl|Cs":{eq:"2 Cs + Cl₂ → 2 CsCl",n:"caesium chloride",dh:-886,c:"explosive"},
+"Cl|Mg":{eq:"Mg + Cl₂ → MgCl₂",n:"magnesium chloride",dh:-641.3,c:"burns"},
+"Ca|Cl":{eq:"Ca + Cl₂ → CaCl₂",n:"calcium chloride",dh:-795.8,c:"burns"},
+"Al|Cl":{eq:"2 Al + 3 Cl₂ → 2 AlCl₃",n:"aluminium chloride",dh:-1408,c:"heat"},
+"Cl|Fe":{eq:"2 Fe + 3 Cl₂ → 2 FeCl₃",n:"iron(III) chloride",dh:-799,c:"red heat"},
+"Cl|Cu":{eq:"Cu + Cl₂ → CuCl₂",n:"cupric chloride",dh:-220,c:"heat"},
+"Cl|Zn":{eq:"Zn + Cl₂ → ZnCl₂",n:"zinc chloride",dh:-415,c:"ignites"},
+"Cl|Ti":{eq:"Ti + 2 Cl₂ → TiCl₄",n:"titanium tetrachloride",dh:-804,c:"heat · Kroll process step"},
+"Cl|Si":{eq:"Si + 2 Cl₂ → SiCl₄",n:"silicon tetrachloride",dh:-657,c:"heat"},
+"Cl|P":{eq:"2 P + 3 Cl₂ → 2 PCl₃",n:"phosphorus trichloride",dh:-574,c:"spontaneous"},
+"Cl|S":{eq:"2 S + Cl₂ → S₂Cl₂",n:"disulfur dichloride",dh:-60,c:"mild heat"},
+"B|Cl":{eq:"2 B + 3 Cl₂ → 2 BCl₃",n:"boron trichloride",dh:-808,c:"heat"},
+"Cl|N":{eq:"N₂ + 3 Cl₂ → 2 NCl₃",n:"nitrogen trichloride",dh:460,c:"indirect · explosive product — ENDOTHERMIC"},
+"Br|Cl":{eq:"Br₂ + Cl₂ → 2 BrCl",n:"bromine monochloride",dh:29,c:"mild · equilibrium — ENDOTHERMIC"},
+"Cl|I":{eq:"I₂ + Cl₂ → 2 ICl",n:"iodine monochloride",dh:36,c:"room temp — ENDOTHERMIC"},
+"Ag|Cl":{eq:"2 Ag + Cl₂ → 2 AgCl",n:"silver chloride",dh:-254,c:"moist chlorine"},
+"Cl|Hg":{eq:"Hg + Cl₂ → HgCl₂",n:"mercuric chloride",dh:-224,c:"warm"},
+"Cl|Sn":{eq:"Sn + 2 Cl₂ → SnCl₄",n:"tin tetrachloride",dh:-511,c:"mild heat"},
+"Cl|Pb":{eq:"Pb + Cl₂ → PbCl₂",n:"lead chloride",dh:-359,c:"heat"},
+"Cl|Sb":{eq:"2 Sb + 3 Cl₂ → 2 SbCl₃",n:"antimony trichloride",dh:-764,c:"heat"},
+"As|Cl":{eq:"2 As + 3 Cl₂ → 2 AsCl₃",n:"arsenic trichloride",dh:-610,c:"heat"},
+"Au|Cl":{eq:"2 Au + 3 Cl₂ → 2 AuCl₃",n:"gold(III) chloride",dh:-236,c:"hot Cl₂ / aqua regia"},
+"Cl|Pt":{eq:"Pt + 2 Cl₂ → PtCl₄",n:"platinum tetrachloride",dh:-195,c:"hot chlorination"},
+"Cl|Ge":{eq:"Ge + 2 Cl₂ → GeCl₄",n:"germanium tetrachloride",dh:-496,c:"heat"},
+"Cl|Ga":{eq:"2 Ga + 3 Cl₂ → 2 GaCl₃",n:"gallium trichloride",dh:-1042,c:"heat"},
+"Bi|Cl":{eq:"2 Bi + 3 Cl₂ → 2 BiCl₃",n:"bismuth trichloride",dh:-770,c:"heat"},
+"Br|H":{eq:"H₂ + Br₂ → 2 HBr",n:"hydrogen bromide",dh:-72.8,c:"heat · Pt catalyst"},
+"Br|Na":{eq:"2 Na + Br₂ → 2 NaBr",n:"sodium bromide",dh:-722,c:"violent"},
+"Br|K":{eq:"2 K + Br₂ → 2 KBr",n:"potassium bromide",dh:-788,c:"explosive"},
+"Al|Br":{eq:"2 Al + 3 Br₂ → 2 AlBr₃",n:"aluminium bromide",dh:-1054,c:"spontaneous"},
+"Br|P":{eq:"2 P + 3 Br₂ → 2 PBr₃",n:"phosphorus tribromide",dh:-368,c:"spontaneous"},
+"H|I":{eq:"H₂ + I₂ ⇌ 2 HI",n:"hydrogen iodide",dh:53,c:"reversible, heat — ENDOTHERMIC"},
+"I|Na":{eq:"2 Na + I₂ → 2 NaI",n:"sodium iodide",dh:-576,c:"vigorous"},
+"I|K":{eq:"2 K + I₂ → 2 KI",n:"potassium iodide",dh:-655,c:"explosive"},
+"Ag|I":{eq:"2 Ag + I₂ → 2 AgI",n:"silver iodide",dh:-124,c:"slow"},
+"I|Pb":{eq:"Pb + I₂ → PbI₂",n:"lead iodide",dh:-176,c:"heat · golden plates"},
+"Hg|I":{eq:"Hg + I₂ → HgI₂",n:"mercuric iodide",dh:-105,c:"grinding"},
+"Al|I":{eq:"2 Al + 3 I₂ → 2 AlI₃",n:"aluminium iodide",dh:-628,c:"water-catalysed · vigorous"},
+"I|Zn":{eq:"Zn + I₂ → ZnI₂",n:"zinc iodide",dh:-209,c:"water-catalysed"},
+"Br|I":{eq:"I₂ + Br₂ → 2 IBr",n:"iodine monobromide",dh:81,c:"equilibrium — ENDOTHERMIC"},
+"H|N":{eq:"N₂ + 3 H₂ ⇌ 2 NH₃",n:"ammonia",dh:-91.8,c:"Haber–Bosch · 450 °C, Fe, 200 atm"},
+"C|H":{eq:"C + 2 H₂ → CH₄",n:"methane",dh:-74.8,c:"high T · Ni catalyst"},
+"H|S":{eq:"H₂ + S ⇌ H₂S",n:"hydrogen sulfide",dh:-20.6,c:"heat"},
+"H|Li":{eq:"2 Li + H₂ → 2 LiH",n:"lithium hydride",dh:-181,c:"heat"},
+"H|Na":{eq:"2 Na + H₂ → 2 NaH",n:"sodium hydride",dh:-113,c:"heat"},
+"H|K":{eq:"2 K + H₂ → 2 KH",n:"potassium hydride",dh:-115,c:"heat"},
+"Ca|H":{eq:"Ca + H₂ → CaH₂",n:"calcium hydride",dh:-186,c:"heat"},
+"H|Mg":{eq:"Mg + H₂ ⇌ MgH₂",n:"magnesium hydride",dh:-75,c:"high pressure"},
+"H|Pd":{eq:"2 Pd + H₂ → 2 PdH",n:"palladium hydride",dh:-40,c:"absorbed at room temp · 900× volume"},
+"H|Se":{eq:"H₂ + Se ⇌ H₂Se",n:"hydrogen selenide",dh:29,c:"ENDOTHERMIC"},
+"H|Te":{eq:"H₂ + Te ⇌ H₂Te",n:"hydrogen telluride",dh:99,c:"strongly ENDOTHERMIC"},
+"Li|N":{eq:"6 Li + N₂ → 2 Li₃N",n:"lithium nitride",dh:-330,c:"room temp · slow"},
+"Mg|N":{eq:"3 Mg + N₂ → Mg₃N₂",n:"magnesium nitride",dh:-461,c:"burning Mg"},
+"Ca|N":{eq:"3 Ca + N₂ → Ca₃N₂",n:"calcium nitride",dh:-450,c:"heat"},
+"B|N":{eq:"2 B + N₂ → 2 BN",n:"boron nitride",dh:-502,c:"arc"},
+"Al|N":{eq:"2 Al + N₂ → 2 AlN",n:"aluminium nitride",dh:-636,c:"high temp"},
+"N|Si":{eq:"3 Si + 2 N₂ → Si₃N₄",n:"silicon nitride",dh:-744,c:"~1300 °C"},
+"N|Ti":{eq:"2 Ti + N₂ → 2 TiN",n:"titanium nitride",dh:-676,c:"heat · gold-coloured coating"},
+"Fe|S":{eq:"Fe + S → FeS",n:"iron(II) sulfide",dh:-100,c:"heat"},
+"Cu|S":{eq:"2 Cu + S → Cu₂S",n:"chalcocite",dh:-80,c:"heat"},
+"S|Zn":{eq:"Zn + S → ZnS",n:"sphalerite",dh:-206,c:"ignite mix"},
+"Ag|S":{eq:"2 Ag + S → Ag₂S",n:"silver tarnish",dh:-33,c:"slow at room temp"},
+"Hg|S":{eq:"Hg + S → HgS",n:"cinnabar",dh:-58,c:"grind at room temp"},
+"Pb|S":{eq:"Pb + S → PbS",n:"galena",dh:-100,c:"heat"},
+"Al|S":{eq:"2 Al + 3 S → Al₂S₃",n:"aluminium sulfide",dh:-724,c:"heat"},
+"Na|S":{eq:"2 Na + S → Na₂S",n:"sodium sulfide",dh:-375,c:"vigorous"},
+"Mg|S":{eq:"Mg + S → MgS",n:"magnesium sulfide",dh:-346,c:"ignite"},
+"Ca|S":{eq:"Ca + S → CaS",n:"calcium sulfide",dh:-482,c:"heat"},
+"C|S":{eq:"C + 2 S → CS₂",n:"carbon disulfide",dh:117,c:"electric furnace — ENDOTHERMIC"},
+"P|S":{eq:"P₄ + 3 S → P₄S₃",n:"tetraphosphorus trisulfide",dh:-154,c:"heat · match-head chemistry"},
+"As|S":{eq:"2 As + 3 S → As₂S₃",n:"orpiment",dh:-168,c:"heat"},
+"S|Sb":{eq:"2 Sb + 3 S → Sb₂S₃",n:"stibnite",dh:-178,c:"heat"},
+"C|Ca":{eq:"Ca + 2 C → CaC₂",n:"calcium carbide",dh:-60,c:"arc furnace ~2000 °C"},
+"C|Si":{eq:"Si + C → SiC",n:"carborundum",dh:-73,c:"Acheson furnace"},
+"C|Ti":{eq:"Ti + C → TiC",n:"titanium carbide",dh:-185,c:"high T"},
+"C|W":{eq:"W + C → WC",n:"tungsten carbide",dh:-40,c:"high T · cutting tools"},
+"C|Fe":{eq:"3 Fe + C → Fe₃C",n:"cementite",dh:25,c:"metastable — slightly ENDOTHERMIC"},
+"Al|C":{eq:"4 Al + 3 C → Al₄C₃",n:"aluminium carbide",dh:-210,c:"heat"},
+"B|C":{eq:"4 B + C → B₄C",n:"boron carbide",dh:-71,c:"arc · armour ceramic"},
+"C|Mg":{eq:"2 Mg + C → Mg₂C",n:"magnesium carbide",dh:null,c:"also forms Mg₂C₃"},
+"B|Mg":{eq:"Mg + 2 B → MgB₂",n:"magnesium diboride",dh:-92,c:"39 K superconductor"},
+"Mg|Si":{eq:"2 Mg + Si → Mg₂Si",n:"magnesium silicide",dh:-76,c:"heat"},
+"Al|P":{eq:"Al + P → AlP",n:"aluminium phosphide",dh:-168,c:"heat"},
+"Ca|P":{eq:"3 Ca + 2 P → Ca₃P₂",n:"calcium phosphide",dh:-509,c:"heat"},
+"As|Ga":{eq:"Ga + As → GaAs",n:"gallium arsenide",dh:-74,c:"melt at 1238 °C · semiconductor"},
+"Ga|P":{eq:"Ga + P → GaP",n:"gallium phosphide",dh:-91,c:"high P pressure"},
+"Ag|Hg":{eq:"Ag + Hg → Ag(Hg)",n:"silver amalgam",dh:null,c:"mildly exothermic alloying"},
+"Au|Hg":{eq:"Au + Hg → Au(Hg)",n:"gold amalgam",dh:null,c:"amalgamation"},
+"Hg|Zn":{eq:"Zn + Hg → Zn(Hg)",n:"zinc amalgam",dh:null,c:"amalgamation"},
+"Hg|Sn":{eq:"Sn + Hg → Sn(Hg)",n:"tin amalgam",dh:null,c:"amalgamation"}};
+
+/* ================================================================
+   4 · REACTIVITY ENGINE
+================================================================ */
+const REACT=(()=>{
+  const map=new Map();ELEM.forEach(e=>map.set(e.Z,new Set()));
+  const add=(a,b)=>{if(a&&b&&a!==b){map.get(a).add(b);map.get(b).add(a);}};
+  const SY=s=>BYS[s]?BYS[s].Z:null;
+  const AM=ELEM.filter(e=>e.cat==='AM').map(e=>e.Z),AE=ELEM.filter(e=>e.cat==='AE').map(e=>e.Z),
+        LN=ELEM.filter(e=>e.cat==='LN').map(e=>e.Z),AC=ELEM.filter(e=>e.cat==='AC').map(e=>e.Z);
+  ELEM.forEach(e=>{if(e.Z!==9&&e.Z!==2&&e.Z!==10&&e.Z!==18)add(9,e.Z);});
+  AM.forEach(z=>["F","Cl","Br","I","O","S","Se","Te","H","P"].forEach(s=>add(z,SY(s))));add(SY("Li"),SY("N"));
+  AE.forEach(z=>["F","Cl","Br","I","O","S","H","N","C","P"].forEach(s=>add(z,SY(s))));
+  add(SY("Mg"),SY("B"));add(SY("Mg"),SY("Si"));
+  ["O","F","Cl","Br","I","N","S"].forEach(s=>add(1,SY(s)));
+  [...AM,SY("Ca"),SY("Sr"),SY("Ba"),SY("Mg")].forEach(z=>add(1,z));
+  ["Cl","Br","I"].forEach(h=>{const hz=SY(h);
+    [...AM,...AE].forEach(z=>add(hz,z));
+    ["H","P","S","B","Si","Al","Zn","Fe","Cu","Ti","Sn","Sb","As","Ga","In","Tl","Hg","Ag","Se","Te","Ge"].forEach(s=>add(hz,SY(s)));});
+  add(SY("Cl"),SY("Br"));add(SY("Cl"),SY("I"));add(SY("Br"),SY("I"));
+  add(SY("Cl"),SY("Au"));add(SY("Br"),SY("Au"));add(SY("I"),SY("Au"));add(SY("I"),SY("Hg"));
+  add(SY("At"),SY("F"));add(SY("At"),SY("Cl"));add(SY("At"),SY("Na"));
+  ELEM.forEach(e=>{const skip=[2,10,18,36,54,86,47,79,78,109,110,111,112,118];
+    if(e.Z!==8&&!skip.includes(e.Z))add(8,e.Z);});
+  [...AM,...AE].forEach(z=>add(16,z));
+  ["H","F","Cl","Br","C","P","Al","Zn","Fe","Cu","Ag","Hg","Sn","Pb","Sb","As"].forEach(s=>add(16,SY(s)));
+  ["H","O","Li","Mg","Ca","Sr","Ba","B","Al","Si","Ti","Zr"].forEach(s=>add(7,SY(s)));
+  ["O","F","S","Si","Ca","Fe","Ti","W","Al","H","Mg","B"].forEach(s=>add(6,SY(s)));
+  ["O","F","Cl","Br","I","S","Na","K","Mg","Ca","Al","Zn"].forEach(s=>add(15,SY(s)));
+  ["O","F","Cl","N","C","Mg"].forEach(s=>add(5,SY(s)));
+  ["O","F","Cl","N","C","Mg","Ca","Fe","Ti"].forEach(s=>add(14,SY(s)));
+  ["O","F","Cl","S"].forEach(s=>add(32,SY(s)));
+  ["O","F","Cl","Br","I","S","Na","Ga","In"].forEach(s=>add(33,SY(s)));
+  ["O","F","Cl","Br","I","S","Ga"].forEach(s=>add(51,SY(s)));
+  ["O","F","Cl","H","Cd","Zn"].forEach(s=>add(52,SY(s)));
+  ["O","F","Cl","Na","K","Zn","Cd","H"].forEach(s=>add(34,SY(s)));
+  const T=(z,l)=>l.forEach(s=>add(z,SY(s)));
+  T(21,["O","F","Cl","Br","I","H","N","C","S"]);T(39,["O","F","Cl","Br","I","H","N","C","S"]);
+  T(22,["O","F","Cl","Br","I","H","N","C","S"]);T(40,["O","F","Cl","Br","I","H","N","C"]);T(72,["O","F","Cl","I","H","N","C"]);
+  T(23,["O","F","Cl","Br","I","H","N","C"]);T(41,["O","F","Cl","I","H","N"]);T(73,["O","F","Cl","I","H","N"]);
+  T(24,["O","F","Cl","Br","I","S","N","C"]);T(42,["O","F","Cl","Br","I","S","C"]);T(74,["O","F","Cl","Br","I","S","C"]);
+  T(25,["O","F","Cl","Br","I","S"]);T(75,["O","F","Cl"]);T(26,["O","F","Cl","Br","I","S","C","N"]);
+  T(27,["O","F","Cl","Br","I","S"]);T(28,["O","F","Cl","Br","I","S"]);
+  T(29,["O","F","Cl","Br","I","S","Se"]);T(30,["O","F","Cl","Br","I","S"]);
+  T(44,["O","F","Cl"]);T(45,["O","F","Cl"]);T(76,["O","F","Cl"]);T(77,["O","F","Cl"]);
+  T(46,["O","F","Cl","H"]);T(78,["F","Cl"]);T(47,["F","Cl","Br","I","S"]);
+  T(79,["F","Cl","Br","I"]);T(48,["O","S","F","Cl","Br","I"]);
+  T(80,["O","S","F","Cl","Br","I","Ag","Au","Zn","Sn"]);
+  T(13,["O","F","Cl","Br","I","S","N","C","B","P"]);T(31,["O","F","Cl","Br","I","S","N","P","As"]);
+  T(49,["O","F","Cl","Br","I","S","P"]);T(81,["O","F","Cl","Br","I","S"]);
+  T(50,["O","F","Cl","Br","I","S"]);T(82,["O","F","Cl","Br","I","S"]);T(83,["O","F","Cl","Br","I","S"]);T(84,["O","F","Cl"]);
+  LN.forEach(z=>["O","F","Cl","Br","I","H","N","C","S"].forEach(s=>add(z,SY(s))));
+  AC.forEach(z=>{const b=z<=100?["O","F","Cl","Br","I","H","N","C","S"]:["O","F","Cl"];b.forEach(s=>add(z,SY(s)));});
+  add(SY("U"),SY("H"));add(SY("Pu"),SY("H"));add(SY("Th"),SY("N"));
+  add(54,SY("F"));add(36,SY("F"));add(86,SY("F"));add(18,1);
+  for(let z=104;z<=118;z++){if(z<=108){add(z,SY("O"));add(z,SY("Cl"));}add(z,SY("F"));}
+  return map;
+})();
+const SPECULATIVE=new Set([85,86,87,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118]);
+
+/* ---------- safe equation estimator ---------- */
+const SUBS={'0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉'};
+const sub=n=>String(n).split('').map(d=>SUBS[d]).join('');
+const gcd=(a,b)=>b?gcd(b,a%b):a;
+const MSIZE={H:2,N:2,O:2,F:2,Cl:2,Br:2,I:2,P:4,S:8};
+const catRank=c=>({AM:.7,AE:1,LN:1.1,AC:1.2,TM:1.7,PT:1.8,MD:2,NM:2.6,HG:2.8,NG:3})[c]??2;
+const effEn=e=>e.en??catRank(e.cat);
+const METALCATS=new Set(['AM','AE','TM','PT','LN','AC']);
+function oxCharges(el){const pos=[],neg=[];
+  (OX[el.Z]||'').split(',').forEach(t=>{t=t.trim();const m=t.match(/^[+−-](\d*)/);
+    if(m){(t[0]==='+'?pos:neg).push(m[1]?+m[1]:1);}});
+  return{pos,neg};}
+function estimate(a,b){
+  try{
+    let cat=a,an=b;if(effEn(b)<effEn(a)){cat=b;an=a;}
+    const qc=oxCharges(cat),qa=oxCharges(an);
+    if(!qc.pos.length||!qa.neg.length)return null;
+    const p=qc.pos[0],q=qa.neg[0],g=gcd(p,q),m=q/g,n=p/g;
+    const am=MSIZE[cat.sym]||1,bm=MSIZE[an.sym]||1;
+    for(let c3=1;c3<=16;c3++){
+      if((c3*m)%am===0&&(c3*n)%bm===0){
+        let c1=c3*m/am,c2=c3*n/bm,cP=c3;
+        const gg=gcd(gcd(c1,c2),cP);c1/=gg;c2/=gg;cP/=gg;
+        const t=(coef,sym,k)=>(coef>1?coef+' ':'')+sym+(k>1?sub(k):'');
+        return{eq:`${t(c1,cat.sym,am)} + ${t(c2,an.sym,bm)} → ${t(cP,cat.sym,m)+an.sym+(n>1?sub(n):'')}`,est:true,dh:null};}}
+  }catch(err){console.warn('estimate failed',err);}
+  return null;}
+/* single source of truth for any pair */
+function reactionFor(a,b){
+  const key=[a.sym,b.sym].sort().join('|');
+  if(RX[key])return{...RX[key],src:'data'};
+  const est=estimate(a,b);
+  return est?{...est,src:'est'}:{src:'unk'};}
+
+/* ================================================================
+   5 · STATE + HELPERS
+================================================================ */
+const state={sel:null,reactive:false,cats:new Set(),q:'',heat:'',cmpMode:false,cmp:[],tab:'ov',
+  rlab:{on:false,a:null,b:null}};
+const $=id=>document.getElementById(id);
+const tiles={};const tip=$('tip');
+const fmt=(v,d=3)=>v==null?'—':(Math.abs(v)>=1e5||(Math.abs(v)<0.001&&v!==0)?v.toExponential(2):parseFloat(v.toPrecision(d)).toString());
+const yr=y=>y===0?'antiquity':String(y);
+const PARAMS=[
+ {k:'Z',l:'Atomic number',u:''},{k:'mass',l:'Atomic mass',u:'u'},{k:'dens',l:'Density',u:'g/cm³'},
+ {k:'melt',l:'Melting point',u:'K'},{k:'boil',l:'Boiling point',u:'K'},{k:'en',l:'Electronegativity',u:'Pauling'},
+ {k:'crust',l:'Crustal abundance',u:'ppm'},{k:'year',l:'Discovery year',u:'CE'},
+ {k:'nShells',l:'Electron shells',u:''},{k:'neutrons',l:'Neutrons (main isotope)',u:''},
+ {k:'ie',l:'Ionization energy (1st)',u:'kJ/mol'},{k:'bondE',l:'Atomization / bond energy',u:'kJ/mol'}];
+function pval(e,k){
+  if(k==='nShells')return e.shells.length;
+  if(k==='ie')return IE1[e.Z]??null;
+  if(k==='bondE')return MOL[e.Z]?MOL[e.Z][2]:null;
+  return e[k]==null?null:e[k];}
+
+/* ================================================================
+   6 · BUILD TABLE + LEGEND
+================================================================ */
+function build(){
+  const grid=$('ptable'),leg=$('legend');
+  Object.entries(CATS).forEach(([k,v])=>{
+    const b=document.createElement('button');b.className='chip';b.style.setProperty('--c',v.c);
+    b.innerHTML=`<span class="dot"></span>${v.n}`;
+    b.onclick=()=>{state.cats.has(k)?state.cats.delete(k):state.cats.add(k);b.classList.toggle('on');applyView();};
+    leg.appendChild(b);});
+  const all=document.createElement('button');all.className='chip';all.style.setProperty('--c','#8fa1ba');
+  all.innerHTML='ALL';all.onclick=()=>{state.cats.clear();leg.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));applyView();};
+  leg.appendChild(all);
+  const ph=(x,y,txt)=>{const d=document.createElement('div');d.className='ph';d.style.gridColumn=x;d.style.gridRow=y;d.innerHTML=txt;grid.appendChild(d);};
+  ph(3,6,'57–71<br>La–Lu');ph(3,7,'89–103<br>Ac–Lr');
+  const fl=document.createElement('div');fl.className='flabel';fl.style.gridColumn=1;fl.textContent='f-block';grid.appendChild(fl);
+  ELEM.forEach(e=>{
+    const t=document.createElement('button');
+    t.className='tile';t.style.gridColumn=e.x;t.style.gridRow=e.y;
+    t.style.setProperty('--c',CATS[e.cat].c);t.dataset.z=e.Z;t.setAttribute('aria-label',e.name);
+    t.innerHTML=`<span class="z">${e.Z}</span><span class="sym">${e.sym}</span><span class="nm">${e.name}</span><span class="ms">${fmt(e.mass,5)}</span>`;
+    t.addEventListener('click',ev=>{
+      if(state.rlab.on){handleLab(e.Z);return;}
+      (state.cmpMode||ev.shiftKey)?toggleCompare(e.Z):select(e.Z);});
+    t.addEventListener('mouseenter',ev=>showTip(e,ev));
+    t.addEventListener('mousemove',ev=>moveTip(ev));
+    t.addEventListener('mouseleave',hideTip);
+    grid.appendChild(t);tiles[e.Z]=t;});
+}
+function showTip(e,ev){
+  tip.innerHTML=`<b>${e.name}</b><span class="cat" style="background:${CATS[e.cat].c}">${CATS[e.cat].n}</span>
+  <div class="row">Z ${e.Z} · ${fmt(e.mass,5)} u · ${MOL[e.Z]?MOL[e.Z][0]:e.sym} · ${e.cfg}</div>
+  <div class="row">mp ${fmt(e.melt,4)} K · bp ${fmt(e.boil,4)} K${e.en?` · χ ${e.en}`:''}</div>`;
+  tip.classList.add('show');moveTip(ev);}
+function moveTip(ev){
+  const w=tip.offsetWidth,h=tip.offsetHeight;
+  let x=ev.clientX+16,y=ev.clientY+14;
+  if(x+w>innerWidth-8)x=ev.clientX-w-14;if(y+h>innerHeight-8)y=ev.clientY-h-12;
+  tip.style.left=x+'px';tip.style.top=y+'px';}
+function hideTip(){tip.classList.remove('show');}
+
+/* ================================================================
+   7 · VIEW STATE
+================================================================ */
+function applyView(){
+  const q=state.q.toLowerCase();
+  const partners=state.sel&&state.reactive?REACT.get(state.sel):null;
+  const hp=PARAMS.find(p=>p.k===state.heat);
+  let min=Infinity,max=-Infinity;
+  if(hp)ELEM.forEach(e=>{const v=pval(e,hp.k);if(v!=null){min=Math.min(min,v);max=Math.max(max,v);}});
+  const hl=$('heatlegend');
+  if(hp&&isFinite(min)){hl.classList.add('show');
+    $('hlmin').textContent=`${fmt(min,3)}${hp.u?' '+hp.u:''}`;$('hlmax').textContent=`${fmt(max,3)}${hp.u?' '+hp.u:''}`;}
+  else hl.classList.remove('show');
+  ELEM.forEach(e=>{const t=tiles[e.Z];t.className='tile';
+    if(hp){const v=pval(e,hp.k);
+      if(v!=null){const n=max>min?(v-min)/(max-min):.5;t.classList.add('hot');
+        t.style.background=`hsl(${222-208*n} 78% ${15+40*n}%)`;t.style.borderColor=`hsl(${222-208*n} 70% ${30+30*n}%)`;}
+      else{t.style.background='';t.style.borderColor='';}
+    }else{t.style.background='';t.style.borderColor='';}
+    let dim=false;
+    if(q&&!(`${e.name} ${e.sym} ${e.Z}`.toLowerCase().includes(q)))dim=true;
+    if(state.cats.size&&!state.cats.has(e.cat))dim=true;
+    if(partners){if(partners.has(e.Z))t.classList.add('react');else if(e.Z!==state.sel)dim=true;}
+    if(dim)t.classList.add('dim');
+    if(e.Z===state.sel)t.classList.add('sel');
+    const ci=state.cmp.indexOf(e.Z);const old=t.querySelector('.cmp');if(old)old.remove();
+    if(ci>-1){const b=document.createElement('span');b.className='cmp';b.textContent=ci+1;t.appendChild(b);}
+    const oldr=t.querySelector('.rl');if(oldr)oldr.remove();
+    if(state.rlab.on){
+      const m=state.rlab.a===e.Z?'A':state.rlab.b===e.Z?'B':null;
+      if(m){const s=document.createElement('span');s.className='rl';s.textContent=m;t.appendChild(s);}}});
+}
+
+/* ================================================================
+   8 · DETAIL PANEL
+================================================================ */
+let shellRaf=null,specLinePos=[];
+function select(z){
+  state.sel=z;const e=BYZ[z];
+  $('panel').classList.add('open');
+  const c=CATS[e.cat].c;
+  const sym=$('psym');sym.style.setProperty('--c',c);
+  sym.innerHTML=`<b>${e.sym}</b><span>${e.Z} · ${fmt(e.mass,5)}</span>`;
+  $('pname').textContent=e.name;
+  const pc=$('pcat');pc.textContent=CATS[e.cat].n;pc.style.background=c;
+  $('pmass').textContent=`${e.group?'Group '+e.group+' · ':''}Period ${e.period} · ${e.block}-block${SPECULATIVE.has(z)?' · predictive chemistry':''}`;
+  $('pfact').textContent=FACTS[z]||`A ${CATS[e.cat].n.toLowerCase()} of period ${e.period}${e.group?', group '+e.group:''}, first isolated or characterised in ${yr(e.year)}.`;
+  $('pcompare').classList.toggle('on',state.cmp.includes(z));
+  $('preact').classList.toggle('on',state.reactive);
+  /* every tab render is isolated: one failure can never break the panel */
+  const safe=(fn,page)=>{try{fn();}catch(err){console.error(err);$(page).innerHTML='<div class="specnote">This section failed to render — see console.</div>';}};
+  safe(()=>renderOverview(e),'pg-ov');
+  safe(()=>renderMolecule(e),'pg-mo');
+  safe(()=>renderShells(e),'pg-sh');
+  safe(()=>renderSpectrum(e),'pg-sp');
+  safe(()=>renderIsotopes(e),'pg-is');
+  safe(()=>renderReactions(e),'pg-re');
+  setTab(state.tab);applyView();}
+
+function setTab(t){state.tab=t;
+  document.querySelectorAll('.p-tab').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  document.querySelectorAll('.tabpage').forEach(p=>p.classList.toggle('on',p.id==='pg-'+t));
+  cancelAnimationFrame(shellRaf);
+  if(t==='sh')animateShells();
+  if(t==='sp')drawSpectrum();
+  if(t==='mo'){const b=$('ebfill');if(b)b.style.width=b.dataset.w;}}
+document.querySelectorAll('.p-tab').forEach(b=>b.onclick=()=>setTab(b.dataset.t));
+
+function renderOverview(e){
+  const phase=e.melt==null||e.boil==null?'—':(298.15<e.melt?'solid':(298.15>e.boil?'gas':'liquid'));
+  const mol=MOL[e.Z];
+  const kv=[['Atomic mass',fmt(e.mass,6)+' u'],['Phase @ 298 K',phase],
+    ['Standard form',mol?mol[0]:'—'],['Dissociation / ΔaH°',mol&&mol[2]!=null?mol[2]+' kJ/mol':'—'],
+    ['Density',e.dens==null?'—':fmt(e.dens,4)+' g/cm³'],['Electronegativity',e.en??'—'],
+    ['Melting point',e.melt==null?'—':fmt(e.melt,5)+' K'],['Boiling point',e.boil==null?'—':fmt(e.boil,5)+' K'],
+    ['IE₁',IE1[e.Z]?IE1[e.Z]+' kJ/mol':'—'],['E° (aq)',E0[e.Z]!=null?E0[e.Z].toFixed(2)+' V':'—'],
+    ['Covalent radius',RAD[e.Z]?RAD[e.Z]+' pm':'—'],['Crustal abundance',(e.crust||e.crust===0)?fmt(e.crust,4)+' ppm':'trace'],
+    ['Discovery',yr(e.year)],['Discovered by',e.disc||'—'],['p⁺ / e⁻ / n°',`${e.Z} / ${e.Z} / ${e.neutrons}`],
+    ['Reacts with',REACT.get(e.Z).size+' elements']];
+  $('pg-ov').innerHTML=`<h4 class="sec">Characteristics</h4><div class="kv">${
+    kv.map(([k,v])=>`<div><div class="k">${k}</div><div class="v">${v}</div></div>`).join('')
+  }</div><h4 class="sec">Electron configuration</h4><div class="cfg">${e.cfg}</div>`;}
+
+/* ---------- molecule visualization ---------- */
+function molSVG(e){
+  const c=CATS[e.cat].c,t=molType(e.Z);
+  const defs=`<defs><radialGradient id="sph" cx="35%" cy="30%" r="80%">
+    <stop offset="0%" stop-color="#ffffff" stop-opacity="0.85"/>
+    <stop offset="40%" stop-color="${c}"/>
+    <stop offset="100%" stop-color="#04070f"/>
+  </radialGradient></defs>`;
+  const A=(x,y,r,txt)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="url(#sph)" stroke="${c}" stroke-opacity=".45"/>`+
+    (txt?`<text x="${x}" y="${y+r*0.22}" text-anchor="middle" font-family="Chakra Petch,sans-serif" font-size="${Math.max(10,r*0.6)}" font-weight="700" fill="#fff" opacity=".92">${txt}</text>`:'');
+  const L=(x1,y1,x2,y2,o=1,w=3)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w}" stroke-opacity="${.6*o}"/>`;
+  let inner='',cap='';
+  if(t==='di'){
+    const order=BOND[e.Z]||1,len=BLEN[e.Z]||'—',y=84;
+    const offs=order===3?[-8,0,8]:order===2?[-4.5,4.5]:[0];
+    inner=offs.map(o=>L(118,y+o,202,y+o)).join('')+A(90,y,30,e.sym)+A(230,y,30,e.sym)+
+      `<text x="160" y="142" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8fa1ba">bond order ${order} · ${len} pm</text>`;
+    cap=`linear ${e.sym}₂ — ${order===3?'triple':order===2?'double':'single'} bond, ${len} pm`;
+  }else if(t==='mono'){
+    inner=`<circle cx="160" cy="84" r="56" fill="none" stroke="${c}" stroke-opacity=".25" stroke-dasharray="4 5"/>`+
+      A(160,84,42,e.sym)+
+      `<text x="160" y="158" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8fa1ba">monatomic — no bonds at all</text>`;
+    cap='isolated atoms; nothing to dissociate';
+  }else if(t==='p4'){
+    const P=[[160,36],[92,120],[228,120],[160,96]];
+    let ls='';for(let i=0;i<4;i++)for(let j=i+1;j<4;j++)ls+=L(P[i][0],P[i][1],P[j][0],P[j][1],.8,2.5);
+    inner=ls+P.map(p=>A(p[0],p[1],22,'P')).join('')+
+      `<text x="160" y="160" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8fa1ba">6 strained P–P bonds ≈ 201 kJ/mol each</text>`;
+    cap='tetrahedral P₄ cage (white phosphorus)';
+  }else if(t==='s8'){
+    const pts=[];for(let i=0;i<8;i++){const a=i*Math.PI/4;pts.push([160+98*Math.cos(a),84+36*Math.sin(a)+(i%2?12:-12)]);}
+    let ls='';for(let i=0;i<8;i++){const q=pts[(i+1)%8];ls+=L(pts[i][0],pts[i][1],q[0],q[1],.85,2.5);}
+    inner=ls+pts.map(p=>A(p[0],p[1],18,'S')).join('')+
+      `<text x="160" y="160" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8fa1ba">puckered 8-membered crown</text>`;
+    cap='S₈ crown ring — the familiar rhombic form';
+  }else if(t==='chain'){
+    const pts=[];for(let i=0;i<6;i++)pts.push([44+i*46,i%2?104:58]);
+    let ls='';for(let i=0;i<5;i++)ls+=L(pts[i][0],pts[i][1],pts[i+1][0],pts[i+1][1],.85,2.5);
+    inner=ls+pts.map(p=>A(p[0],p[1],17,e.sym)).join('')+
+      `<text x="160" y="152" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8fa1ba">…continues as helical chains in the solid…</text>`;
+    cap='covalent helical chains with weak inter-chain forces';
+  }else if(t==='layer'){
+    const layer=(dx,dy,op)=>{
+      const cx=150+dx,cy=62+dy,r=34;let ls='',nd='';
+      const ring=[];for(let i=0;i<6;i++){const a=i*Math.PI/3-Math.PI/6;ring.push([cx+r*Math.cos(a),cy+r*0.72*Math.sin(a)]);}
+      for(let i=0;i<6;i++){const q=ring[(i+1)%6];ls+=L(ring[i][0],ring[i][1],q[0],q[1],op,2.2);ls+=L(cx,cy,ring[i][0],ring[i][1],op,2.2);}
+      nd=A(cx,cy,15*op+4,op===1?e.sym:'');
+      ring.forEach(p=>nd+=A(p[0],p[1],15*op+4,''));
+      return `<g opacity="${op}">${ls}${nd}</g>`;};
+    inner=layer(14,30,.4)+layer(0,0,1)+
+      `<text x="160" y="160" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8fa1ba">strong in-plane bonds · weak van der Waals between layers</text>`;
+    cap=e.Z===6?'graphite: sp² honeycomb sheets, delocalized π-electrons':'stacked covalent layers (rhombohedral)';
+  }else if(t==='net'){
+    const C=[160,84],N=[[160,26],[86,60],[234,60],[110,138],[210,138]];
+    let ls='';N.forEach(p=>{ls+=L(C[0],C[1],p[0],p[1],.9,2.6);});
+    let ds='';N.forEach(p=>{const ex=p[0]+(p[0]-C[0])*0.55,ey=p[1]+(p[1]-C[1])*0.55;
+      ds+=`<line x1="${p[0]}" y1="${p[1]}" x2="${ex}" y2="${ey}" stroke="${c}" stroke-width="2" stroke-opacity=".28" stroke-dasharray="3 5"/>`;});
+    inner=ls+ds+N.map(p=>A(p[0],p[1],19,e.sym)).join('')+A(C[0],C[1],24,e.sym)+
+      `<text x="160" y="163" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8fa1ba">tetrahedral 3-D network — extends throughout the crystal</text>`;
+    cap='diamond-type covalent network · every atom sp³ bonded to 4 neighbours';
+  }else if(t==='metal'){
+    let ls='',nd='';
+    const rows=[[[120,50],[160,50],[200,50]],[[100,88],[140,88],[180,88],[220,88]],[[120,126],[160,126],[200,126]]];
+    rows.flat().forEach(p=>{nd+=A(p[0],p[1],16,'');});
+    inner=`<rect x="74" y="26" width="172" height="124" rx="10" fill="none" stroke="${c}" stroke-opacity=".2" stroke-dasharray="4 5"/>`+nd+
+      `<text x="160" y="163" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8fa1ba">${CRYS[e.Z]?CRYS[e.Z]+' lattice':'metallic lattice'} · cations in an electron sea${e.Z===80?' · LIQUID at 298 K':''}</text>`;
+    cap='metallic bonding — delocalized valence electrons hold the cation lattice together';
+  }else{
+    inner=`<text x="160" y="90" text-anchor="middle" font-size="11" fill="#5c6b84">no structure data</text>`;cap='—';}
+  return {svg:`<svg viewBox="0 0 320 172">${defs}${inner}</svg>`,cap};}
+
+function renderMolecule(e){
+  const mol=MOL[e.Z];
+  const ox=(OX[e.Z]||'—').split(',').map(t=>t.trim()).filter(Boolean);
+  const E=mol?mol[2]:null;
+  const vis=molSVG(e);
+  $('pg-mo').innerHTML=`
+  <h4 class="sec">Standard-state form</h4>
+  <div class="molhead"><div class="f">${mol?mol[0].split(' ')[0]:e.sym}</div>
+    <div class="g">${mol?mol[0]:'no data'}<br>${mol?mol[1]:'—'}${CRYS[e.Z]?`<br>lattice: ${CRYS[e.Z]}`:''}</div></div>
+  <h4 class="sec">Structure</h4>
+  <div class="specwrap molvis">${vis.svg}<div class="enote">${vis.cap}</div></div>
+  <h4 class="sec">Energy to break it apart</h4>
+  <div class="specwrap" style="padding:14px">
+    <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px">
+      <span style="color:var(--acc)">${mol?mol[3]:'—'}</span><span>${E!=null?E+' kJ/mol':'—'}</span></div>
+    <div class="ebar"><i id="ebfill" data-w="${E!=null?Math.max(E/945*100,1.5):0}%" style="width:0"></i></div>
+    <div class="enote">${E==null?'No tabulated value — synthetic element.':
+      E===0?'Monatomic: nothing to break — the gas is already free atoms.':
+      `Energy required to convert 1 mol of ${e.name} in its standard state into free gaseous atoms. Scale anchored to the N≡N triple bond (945 kJ/mol).`}</div>
+  </div>
+  <h4 class="sec">Oxidation states</h4>
+  <div class="oxchips">${ox.map(o=>`<span class="ox ${o[0]==='−'||o[0]==='-'?'neg':'pos'}">${o}</span>`).join('')}</div>
+  <h4 class="sec">Energetics &amp; scale</h4>
+  <div class="kv">
+    <div><div class="k">IE₁ (1st ionization)</div><div class="v">${IE1[e.Z]?IE1[e.Z]+' <small>kJ/mol</small>':'—'}</div></div>
+    <div><div class="k">E° standard potential</div><div class="v">${E0[e.Z]!=null?E0[e.Z].toFixed(2)+' <small>V</small>':'—'}</div></div>
+    <div><div class="k">Covalent radius</div><div class="v">${RAD[e.Z]?RAD[e.Z]+' <small>pm</small>':'—'}</div></div>
+    <div><div class="k">Crystal structure</div><div class="v">${CRYS[e.Z]||'—'}</div></div>
+  </div>`;
+  requestAnimationFrame(()=>{const b=$('ebfill');if(b)b.style.width=b.dataset.w;});}
+
+function renderShells(e){
+  $('pg-sh').innerHTML=`<h4 class="sec">Bohr model · ${e.shells.length} shell${e.shells.length>1?'s':''}</h4>
+  <div class="bohrbox"><canvas id="bohr" width="340" height="340"></canvas></div>
+  <div class="shellchips">${e.shells.map((n,i)=>`<span class="schip"><b>${'KLMNOPQ'[i]}</b> · ${n} e⁻</span>`).join('')}</div>
+  <div class="cfg">${e.cfg}</div>`;}
+function animateShells(){
+  const cv=$('bohr');if(!cv)return;const ctx=cv.getContext('2d');
+  const e=BYZ[state.sel],c=CATS[e.cat].c,W=cv.width,H=cv.height,cx=W/2,cy=H/2;
+  const n=e.shells.length,r0=30,step=n>1?(Math.min(W,H)/2-24-r0)/(n-1):0;
+  const t0=performance.now();
+  const frame=now=>{
+    if(!$('bohr'))return;const t=(now-t0)/1000;
+    ctx.clearRect(0,0,W,H);
+    ctx.beginPath();ctx.arc(cx,cy,15,0,7);ctx.fillStyle=c+'33';ctx.fill();
+    ctx.beginPath();ctx.arc(cx,cy,11,0,7);ctx.fillStyle=c;ctx.fill();
+    ctx.fillStyle='#081020';ctx.font='700 10px IBM Plex Mono';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(e.Z,cx,cy);
+    e.shells.forEach((cnt,i)=>{
+      const r=r0+i*step;
+      ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.strokeStyle='rgba(150,180,220,.14)';ctx.lineWidth=1;ctx.stroke();
+      const dir=i%2?1:-1,spd=dir*(0.55/(i*0.35+1));
+      for(let k=0;k<cnt;k++){
+        const a=t*spd+(k/cnt)*Math.PI*2+i*0.7;
+        ctx.beginPath();ctx.arc(cx+Math.cos(a)*r,cy+Math.sin(a)*r,3.1,0,7);
+        ctx.fillStyle='#eaf6ff';ctx.shadowColor=c;ctx.shadowBlur=7;ctx.fill();ctx.shadowBlur=0;}});
+    shellRaf=requestAnimationFrame(frame);};
+  shellRaf=requestAnimationFrame(frame);}
+
+function wlRGB(wl){
+  let r=0,g=0,b=0;
+  if(wl<380)return[140,110,255];
+  if(wl<440){r=-(wl-440)/60;b=1;}else if(wl<490){g=(wl-440)/50;b=1;}
+  else if(wl<510){g=1;b=-(wl-510)/20;}else if(wl<580){r=(wl-510)/70;g=1;}
+  else if(wl<645){r=1;g=-(wl-645)/65;}else{r=1;}
+  let f=1;if(wl<420)f=.45+(wl-380)/40*.55;else if(wl>700)f=.45+(780-wl)/80*.55;
+  return[r*f*255,g*f*255,b*f*255].map(Math.round);}
+const jitter=(z,i)=>{const x=Math.sin(i*127.1+z*311.7)*43758.545;return x-Math.floor(x);};
+
+function renderSpectrum(e){
+  $('pg-sp').innerHTML=`<h4 class="sec">Emission spectrum</h4><div class="specwrap">
+    <canvas id="spec" height="170"></canvas><div class="speclabel" id="speclabel"></div></div>
+    <div class="specnote" id="specnote"></div>`;
+  drawSpectrum();}
+function drawSpectrum(hoverWl){
+  const cv=$('spec');if(!cv)return;const e=BYZ[state.sel];
+  const dpr=devicePixelRatio||1,wCss=cv.parentElement.clientWidth-16;
+  cv.style.width=wCss+'px';cv.width=wCss*dpr;cv.height=170*dpr;
+  const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);
+  const W=wCss,H=170,padL=18,padR=18,base=H-46,top=14,lo=250,hi=800;
+  const X=wl=>padL+(wl-lo)/(hi-lo)*(W-padL-padR);
+  ctx.clearRect(0,0,W,H);
+  for(let x=X(380);x<=X(780);x+=2){const wl=lo+(x-padL)/(W-padL-padR)*(hi-lo);
+    const[r,g,b]=wlRGB(wl);ctx.fillStyle=`rgba(${r},${g},${b},0.16)`;ctx.fillRect(x,base,2,10);}
+  ctx.fillStyle='rgba(140,110,255,.12)';ctx.fillRect(padL,base,X(380)-padL,10);
+  ctx.fillStyle='rgba(255,80,80,.12)';ctx.fillRect(X(780),base,W-padR-X(780),10);
+  ctx.font='9px IBM Plex Mono';ctx.textAlign='center';ctx.fillStyle='#5c6b84';
+  for(let wl=300;wl<=800;wl+=100){ctx.fillRect(X(wl)-.5,base+12,1,4);ctx.fillText(wl,X(wl),base+27);}
+  ctx.fillStyle='#8a7bb8';ctx.textAlign='left';ctx.fillText('← UV',padL,top+8);
+  ctx.fillStyle='#c06060';ctx.textAlign='right';ctx.fillText('IR →',W-padR,top+8);
+  ctx.strokeStyle='rgba(150,180,220,.2)';ctx.beginPath();ctx.moveTo(padL,base);ctx.lineTo(W-padR,base);ctx.stroke();
+  specLinePos=[];
+  if(!e.spec.length){
+    ctx.fillStyle='#5c6b84';ctx.font='italic 11px IBM Plex Sans';ctx.textAlign='center';
+    ctx.fillText('No characteristic emission spectrum on record —',W/2,70);
+    ctx.fillText('synthetic / short-lived element.',W/2,86);
+    $('specnote').innerHTML='';return;}
+  e.spec.forEach((wl,i)=>{
+    const x=X(wl);if(x<padL||x>W-padR)return;
+    const inten=0.5+0.5*jitter(e.Z,i),h=(base-top-8)*inten;
+    const[r,g,b]=wlRGB(wl);
+    const near=hoverWl!=null&&Math.abs(wl-hoverWl)<7;
+    ctx.strokeStyle=near?`rgb(255,255,255)`:`rgba(${r},${g},${b},.95)`;
+    ctx.lineWidth=near?2.6:1.6;ctx.shadowColor=`rgba(${r},${g},${b},.9)`;ctx.shadowBlur=near?12:6;
+    ctx.beginPath();ctx.moveTo(x,base);ctx.lineTo(x,base-h);ctx.stroke();ctx.shadowBlur=0;
+    specLinePos.push({x,wl});});
+  $('specnote').innerHTML=e.approx?'Representative principal lines (partial — full arc/spark spectra contain hundreds).':'Principal emission lines of the neutral atom.';}
+document.addEventListener('mousemove',ev=>{
+  if(state.tab!=='sp'||!$('spec'))return;
+  const r=$('spec').getBoundingClientRect();
+  if(ev.clientX<r.left||ev.clientX>r.right||ev.clientY<r.top||ev.clientY>r.bottom){$('speclabel').style.display='none';return;}
+  let best=null;specLinePos.forEach(p=>{if(Math.abs(p.x-(ev.clientX-r.left))<6)best=p;});
+  const lab=$('speclabel');
+  if(best){lab.style.display='block';lab.textContent=`λ = ${best.wl} nm`;drawSpectrum(best.wl);}
+  else if(lab.style.display!=='none'){lab.style.display='none';drawSpectrum();}});
+
+function renderIsotopes(e){
+  const stableN=e.iso.filter(i=>i[2]==='stable').length;
+  const unN=e.iso.length-stableN;
+  let html=`<h4 class="sec">Isotopes</h4><div class="isosum">${stableN?`<b style="color:var(--ok)">${stableN} stable</b> · `:''}${unN?`<b style="color:var(--bad)">${unN} radioactive</b> listed`:'no radioactive isotopes listed'}${!stableN?' · <i>element has no stable isotopes</i>':''}</div>`;
+  const maxAb=Math.max(...e.iso.map(i=>i[1]||0),1);
+  html+=e.iso.map(([A,ab,note])=>{
+    const st=note==='stable';
+    const nm=ISONAME[A+'|'+e.Z]||`${e.name.toLowerCase()}-${A}`;
+    const w=ab!=null?Math.max(4,ab/maxAb*100):6;
+    return `<div class="iso"><span class="nu"><span><sup>${A}</sup>${e.sym}</span><i title="${nm}">${nm}</i></span>
+      <span class="ib ${st?'stable':'un'}">${st?'STABLE':'UNSTABLE'}</span>
+      <span class="bar"><i data-w="${w}" style="background:${st?'linear-gradient(90deg,#2dd4bf,#8be9fd)':'linear-gradient(90deg,#c084fc,#f472b6)'}"></i></span>
+      <span class="ab">${ab!=null?ab+' %':''} ${st?'':note}</span></div>`;}).join('');
+  $('pg-is').innerHTML=html;
+  requestAnimationFrame(()=>$('pg-is').querySelectorAll('.bar i').forEach(b=>b.style.width=b.dataset.w+'%'));}
+
+function renderReactions(e){
+  const ps=[...REACT.get(e.Z)].sort((a,b)=>a-b);
+  const spec=SPECULATIVE.has(e.Z)?'<div class="specnote" style="color:var(--warn)">⚠ Chemistry inferred / predicted from periodic trends — few or no bench experiments exist.</div>':'';
+  if(!ps.length){$('pg-re').innerHTML=`<h4 class="sec">Reactions</h4><div class="specnote">No direct element–element reactions under ordinary conditions — ${e.name} is essentially inert.</div>`;return;}
+  const cards=ps.map(z=>{const p=BYZ[z];const r=reactionFor(e,p);return{z,p,r};});
+  /* safe sort: curated-with-ΔH first, then curated-ΔH-null, then estimates, then unknown */
+  const rank=c=>c.r.src==='data'?(c.r.dh!=null?0:1):c.r.src==='est'?2:3;
+  cards.sort((A,B)=>{const d=rank(A)-rank(B);
+    if(d!==0)return d;
+    const da=A.r.dh!=null?A.r.dh:1e9,db=B.r.dh!=null?B.r.dh:1e9;return da-db;});
+  $('pg-re').innerHTML=`<h4 class="sec">${ps.length} reaction partner${ps.length>1?'s':''} — sorted by ΔH°</h4>${spec}`+
+  cards.map(({z,p,r})=>{
+    const dhb=r.dh!=null
+      ?`<span class="dh ${r.dh<0?'exo':'endo'}">ΔH° ${r.dh>0?'+':''}${fmt(r.dh,4)} kJ · ${r.dh<0?'EXOTHERMIC':'ENDOTHERMIC'}</span>`
+      :`<span class="dh na">ΔH° not tabulated</span>`;
+    const body=r.src==='unk'
+      ?`<div class="rxn-eq" style="color:var(--dim)">direct combination reported · product stoichiometry varies</div>`
+      :`<div class="rxn-eq">${r.eq}${r.src==='est'?' <span class="est">EST</span>':''}</div>`;
+    return `<div class="rxn"><div class="rxn-top">
+      <button class="rxn-partner" style="--c:${CATS[p.cat].c}" data-rz="${z}"><b>${p.sym}</b> ${p.name} <small style="color:var(--dim)">· ${z}</small></button>
+      ${r.src==='data'&&r.n?`<span class="cond">${r.n}</span>`:''}</div>
+      ${body}
+      <div class="rxn-meta">${dhb}${r.c?`<span class="cond">◆ ${r.c}</span>`:''}</div></div>`;}).join('');
+  $('pg-re').querySelectorAll('.rxn-partner').forEach(b=>b.onclick=()=>select(+b.dataset.rz));}
+
+/* ================================================================
+   9 · REACTION LAB (pick any two elements)
+================================================================ */
+function handleLab(z){
+  const R=state.rlab;
+  if(R.a===z)R.a=null;
+  else if(R.b===z)R.b=null;
+  else if(R.a==null)R.a=z;
+  else if(R.b==null)R.b=z;
+  else{R.a=z;R.b=null;}
+  renderLab();applyView();}
+function setLab(on){
+  state.rlab.on=on;
+  if(!on){state.rlab.a=state.rlab.b=null;}
+  $('rlabBtn').classList.toggle('on',on);
+  $('tray').classList.toggle('lift',on);
+  renderLab();applyView();}
+function renderLab(){
+  const R=state.rlab,card=$('rlab');
+  card.classList.toggle('show',R.on);
+  if(!R.on)return;
+  const body=$('rlabbody');
+  const chip=z=>{const e=BYZ[z];
+    return `<span class="labchip" style="--c:${CATS[e.cat].c}">
+      <button class="lc-open" data-z="${z}"><b>${e.sym}</b>${e.name}</button>
+      <span class="lc-x" data-z="${z}">✕</span></span>`;};
+  let html=`<div class="labpair">
+    ${R.a!=null?chip(R.a):'<span class="labslot">① first element…</span>'}
+    <span class="labplus">＋</span>
+    ${R.b!=null?chip(R.b):'<span class="labslot">② second element…</span>'}</div>`;
+  $('rlabhint').textContent=(R.a!=null&&R.b!=null)?'click a new element to start over':(R.a!=null?'now pick the second element':'click two elements on the table');
+  if(R.a!=null&&R.b!=null){
+    const A=BYZ[R.a],B=BYZ[R.b];
+    const r=reactionFor(A,B);
+    const classified=REACT.get(A.Z).has(B.Z);
+    const bothMetal=METALCATS.has(A.cat)&&METALCATS.has(B.cat);
+    const nobleInv=A.cat==='NG'||B.cat==='NG';
+    let res='';
+    if(r.src==='data'){
+      res=`<div class="rxn-eq">${r.eq}</div>
+      <div class="rxn-meta">
+        ${r.dh!=null?`<span class="dh ${r.dh<0?'exo':'endo'}">ΔH° ${r.dh>0?'+':''}${fmt(r.dh,4)} kJ · ${r.dh<0?'EXOTHERMIC':'ENDOTHERMIC'}</span>`:`<span class="dh na">ΔH° not tabulated</span>`}
+        ${r.n?`<span class="cond">→ ${r.n}</span>`:''}
+        <span class="tag">CURATED THERMOCHEMISTRY</span></div>
+      ${r.c?`<div class="cond" style="margin-top:7px">◆ ${r.c}</div>`:''}`;
+    }else if(r.src==='est'){
+      res=`<div class="rxn-eq">${r.eq} <span class="est">EST</span></div>
+      <div class="rxn-meta"><span class="dh na">ΔH° not tabulated</span>
+        <span class="tag" style="color:var(--warn);border-color:rgba(251,191,36,.4)">OXIDATION-STATE ESTIMATE</span></div>
+      <div class="cond" style="margin-top:7px">Product from charge cross-multiplication (${OX[A.Z]||'?'} vs ${OX[B.Z]||'?'}) and auto-balanced against the elemental forms. Expected to be favorable given the electronegativity gap Δχ ≈ ${Math.abs(effEn(A)-effEn(B)).toFixed(2)}.</div>`;
+    }else{
+      const msg=bothMetal?'No stoichiometric compound — these metals form ALLOYS / solid solutions instead (intermetallic phases may exist at specific ratios).':
+        nobleInv?'No reaction: noble-gas closed shells resist bonding under ordinary conditions (Xe, Kr and Rn yield only to fluorine).':
+        'No direct binary reaction recorded between these two elements under ordinary conditions.';
+      res=`<div class="rxn-eq" style="color:var(--mut)">${A.sym} + ${B.sym} → <span style="color:var(--dim)">no reaction</span></div>
+      <div class="cond" style="margin-top:6px">${msg}</div>`;}
+    html+=`<div class="labres">${res}
+      <div class="cond" style="margin-top:9px">reactivity engine: ${classified?'<span style="color:var(--ok)">classified reactive pair</span>':'<span style="color:var(--dim)">not classified as directly reactive</span>'}</div>
+    </div>`;}
+  body.innerHTML=html;
+  body.querySelectorAll('.lc-open').forEach(b=>b.onclick=()=>select(+b.dataset.z));
+  body.querySelectorAll('.lc-x').forEach(b=>b.onclick=()=>{const z=+b.dataset.z;
+    if(state.rlab.a===z)state.rlab.a=null;if(state.rlab.b===z)state.rlab.b=null;
+    renderLab();applyView();});}
+$('rlabBtn').onclick=()=>setLab(!state.rlab.on);
+$('rlabclose').onclick=()=>setLab(false);
+
+/* ================================================================
+   10 · CONTROLS
+================================================================ */
+function setReactive(v){state.reactive=v;$('preact').classList.toggle('on',v);
+  if(v)setTab('re');applyView();}
+$('preact').onclick=()=>setReactive(!state.reactive);
+$('pclose').onclick=()=>{$('panel').classList.remove('open');state.sel=null;state.reactive=false;applyView();};
+$('pcompare').onclick=()=>toggleCompare(state.sel);
+$('cmpBtn').onclick=()=>{state.cmpMode=!state.cmpMode;$('cmpBtn').classList.toggle('on',state.cmpMode);syncTray();};
+$('resetBtn').onclick=()=>{
+  state.sel=null;state.reactive=false;state.cats.clear();state.q='';state.heat='';state.cmpMode=false;state.cmp=[];
+  $('search').value='';$('heat').value='';$('cmpBtn').classList.remove('on');$('panel').classList.remove('open');
+  setLab(false);
+  document.querySelectorAll('#legend .chip').forEach(c=>c.classList.remove('on'));
+  applyView();syncTray();};
+$('surprise').onclick=()=>{select(ELEM[Math.floor(Math.random()*ELEM.length)].Z);};
+$('search').addEventListener('input',e=>{state.q=e.target.value.trim();applyView();});
+document.addEventListener('keydown',ev=>{
+  if(ev.key==='/'&&document.activeElement!==$('search')){ev.preventDefault();$('search').focus();}
+  if(ev.key==='Escape'){
+    if(state.rlab.on){setLab(false);return;}
+    if(state.sel){$('panel').classList.remove('open');state.sel=null;state.reactive=false;}
+    state.q='';$('search').value='';applyView();}});
+PARAMS.forEach(p=>{const o=document.createElement('option');o.value=p.k;o.textContent='heatmap: '+p.l.toLowerCase();$('heat').appendChild(o);});
+$('heat').onchange=e=>{state.heat=e.target.value;applyView();};
+
+function toggleCompare(z){
+  const i=state.cmp.indexOf(z);
+  if(i>-1)state.cmp.splice(i,1);
+  else{if(state.cmp.length>=4)state.cmp.shift();state.cmp.push(z);}
+  if(state.cmp.length&&!state.cmpMode){state.cmpMode=true;$('cmpBtn').classList.add('on');}
+  $('pcompare').classList.toggle('on',state.cmp.includes(state.sel));
+  applyView();syncTray();renderBars();}
+PARAMS.slice(1).forEach(p=>{const o=document.createElement('option');o.value=p.k;o.textContent=p.l;
+  if(p.k==='dens')o.selected=true;$('cparam').appendChild(o);});
+$('cparam').onchange=renderBars;$('clog').onchange=renderBars;
+function syncTray(){
+  const t=$('tray');t.classList.toggle('show',state.cmpMode||state.cmp.length>0);
+  $('cslots').innerHTML=state.cmp.map(z=>{const e=BYZ[z];
+    return `<span class="slot" style="--c:${CATS[e.cat].c}"><b>${e.sym}</b>${e.name}<span class="x" data-x="${z}">✕</span></span>`;}).join('')
+    ||'<span style="font-size:11px;color:var(--dim)">click elements (or shift+click) to add up to 4</span>';
+  $('cslots').querySelectorAll('.x').forEach(x=>x.onclick=()=>toggleCompare(+x.dataset.x));
+  renderBars();}
+function renderBars(){
+  const box=$('cbars');if(!state.cmp.length){box.innerHTML='';return;}
+  const p=PARAMS.find(pp=>pp.k===$('cparam').value)||PARAMS[1];
+  const log=$('clog').checked;
+  const rows=state.cmp.map(z=>({e:BYZ[z],v:pval(BYZ[z],p.k)})).sort((a,b)=>(b.v??-Infinity)-(a.v??-Infinity));
+  const vals=rows.filter(r=>r.v!=null).map(r=>log?Math.log10(Math.max(r.v,1e-6)):r.v);
+  const mx=Math.max(...vals,0);
+  box.innerHTML=rows.map(r=>{
+    const w=r.v==null?0:((log?Math.log10(Math.max(r.v,1e-6)):r.v)/mx*100);
+    return `<div class="crow" style="--c:${CATS[r.e.cat].c}"><span class="cs">${r.e.sym}</span>
+      <div class="track"><div class="fill" style="width:0" data-w="${w}"></div></div>
+      <span class="cv">${r.v==null?'no data':fmt(r.v,4)+' '+p.u}</span></div>`;}).join('');
+  requestAnimationFrame(()=>box.querySelectorAll('.fill').forEach(f=>f.style.width=Math.max(f.dataset.w,f.dataset.w>0?2:0)+'%'));}
+addEventListener('resize',()=>{if(state.tab==='sp')drawSpectrum();});
+
+build();applyView();
+</script>
+</body>
+</html>
